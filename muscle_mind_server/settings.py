@@ -82,6 +82,9 @@ DATABASES = {
         'PASSWORD': 'dev_temp_password',
         'HOST': 'localhost',
         'PORT': '5432',
+        'OPTIONS': {
+            'options': '-c search_path=your_schema,public'
+        }
     }
 }
 
