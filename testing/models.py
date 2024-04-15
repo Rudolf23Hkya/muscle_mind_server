@@ -54,24 +54,13 @@ class Exercise(models.Model):
     duration = models.IntegerField()
     caloriesburnt = models.IntegerField()
     drawablepicname = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return self.name
 
     class Meta:
         managed = False
         db_table = 'exercise'
-
-
-class TestingExercise(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    category = models.CharField(max_length=100)
-    muscle_group = models.CharField(max_length=100)
-    experience_level = models.CharField(max_length=100)
-    duration = models.IntegerField()
-    calories_burnt = models.IntegerField()
-    drawablepicname = models.CharField(max_length=255)
-
-    class Meta:
-        managed = False
-        db_table = 'testing_exercise'
 
 
 class User(models.Model):
@@ -85,6 +74,9 @@ class User(models.Model):
     age = models.IntegerField()
     weight = models.DecimalField(max_digits=10, decimal_places=2)
     height = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    def __str__(self):
+        return self.email
 
     class Meta:
         managed = False
@@ -95,6 +87,9 @@ class Workout(models.Model):
     name = models.CharField(unique=True, max_length=50)
     experiencelevel = models.CharField(max_length=50, choices=ExperienceLevel.choices())
     drawablepicname = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return self.name
 
     class Meta:
         managed = False
@@ -103,12 +98,15 @@ class Workout(models.Model):
 
 class UserDailyPerformance(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user_id = models.ForeignKey(User, models.DO_NOTHING)
+    user = models.ForeignKey(User, models.DO_NOTHING)
     date = models.DateField()
     calorie_intake = models.IntegerField()
     hydration_ml = models.IntegerField()
     time_logged_in_minutes = models.IntegerField()
     time_working_out_minutes = models.IntegerField()
+    
+    def __str__(self):
+        return self.date + " " + self.user
 
     class Meta:
         managed = False
@@ -116,21 +114,28 @@ class UserDailyPerformance(models.Model):
 
 
 class UserWorkout(models.Model):
-    userid = models.ForeignKey(User, models.DO_NOTHING, db_column='userid')  # The composite primary key (userid, workoutid) found, that is not supported. The first column is selected.
-    workoutid = models.ForeignKey(Workout, models.DO_NOTHING, db_column='workoutid')
+    user = models.OneToOneField(User, models.DO_NOTHING,primary_key=True)
+    workout = models.ForeignKey(Workout, models.DO_NOTHING)
+    
+    def __str__(self):
+        return self.user + " - " + self.workout
 
     class Meta:
         managed = False
         db_table = 'user_workout'
-        unique_together = (('userid', 'workoutid'),)
+        # Composite primary key constraint (user_id, workout_id)
+        unique_together = (('user_id', 'workout_id'),)
 
-
+#Just the workouts
 class UserWorkoutHistory(models.Model):
     workout_history_id = models.AutoField(primary_key=True)
     daily_performance = models.ForeignKey(UserDailyPerformance, models.DO_NOTHING)
     workout = models.OneToOneField(Workout, models.DO_NOTHING)
     duration_minutes = models.IntegerField()
     calories_burned = models.IntegerField()
+    
+    def __str__(self):
+        return self.workout + "dur: " + self.duration_minutes
 
     class Meta:
         managed = False
@@ -138,11 +143,15 @@ class UserWorkoutHistory(models.Model):
 
 
 class WorkoutExercise(models.Model):
-    workoutid = models.ForeignKey(Workout, models.DO_NOTHING, db_column='workoutid')  # The composite primary key (workoutid, exerciseid) found, that is not supported. The first column is selected.
-    exerciseid = models.ForeignKey(Exercise, models.DO_NOTHING, db_column='exerciseid')
+    workout = models.OneToOneField(Workout, on_delete=models.DO_NOTHING, primary_key=True)
+    exercise = models.ForeignKey(Exercise, models.DO_NOTHING)
     exercise_order = ArrayField(models.IntegerField(),default=list)
+    
+    def __str__(self):
+        return self.workout + " - " + self.exercise + "ord: " + self.exercise_order
 
     class Meta:
         managed = False
         db_table = 'workout_exercise'
-        unique_together = (('workoutid', 'exerciseid'),)
+        # Composite primary key constraint (userid, workoutid)
+        unique_together = (('workout_id', 'exercise_id'),)
