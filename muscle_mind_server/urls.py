@@ -16,9 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from testing.views import exercise_list
+from testing import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('exercises/', exercise_list, name='exercise_list'),
+    path('regUser/', views.register_new_user),
+    path('loginUser/', views.login_user),
+    path('loginUser_google/', views.login_with_google),
+    path('workout_done/', views.workout_done),
+    path('get_calories/', views.get_calories),
+    path('add_calories/', views.add_calories),
+    path('get_stats/', views.get_stats)
 ]

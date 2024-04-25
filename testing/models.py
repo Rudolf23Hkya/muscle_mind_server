@@ -1,7 +1,9 @@
 from enum import Enum
 from django.db import models
-import psycopg2
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 #ENUM DEF
 class Category(Enum):
@@ -62,13 +64,8 @@ class Exercise(models.Model):
         managed = False
         db_table = 'exercise'
 
-
-class User(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    sessiontoken = models.TextField()
-    email = models.CharField(unique=True, max_length=255)
-    name = models.CharField(max_length=50)
-    password = models.TextField()
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE,primary_key=True, related_name='profile',db_column='id')
     gender = models.CharField(max_length=50, choices=Gender.choices())
     experiencelevel = models.CharField(max_length=50, choices=ExperienceLevel.choices())
     age = models.IntegerField()
@@ -76,7 +73,7 @@ class User(models.Model):
     height = models.DecimalField(max_digits=10, decimal_places=2)
     
     def __str__(self):
-        return self.email
+        return self.user.email
 
     class Meta:
         managed = False
