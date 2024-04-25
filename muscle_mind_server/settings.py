@@ -147,3 +147,8 @@ SIMPLE_JWT = {
    'ALGORITHM': 'HS256',
    'SIGNING_KEY': SECRET_KEY,
 }
+
+AUTHENTICATION_BACKENDS = [
+    'path.to.your.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',  # Optional, keep for fallback to default behavior
+]

@@ -1,6 +1,4 @@
 from rest_framework import serializers
-from django.contrib.auth.hashers import make_password
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 import re
 
@@ -46,6 +44,11 @@ class UserSerializer(serializers.ModelSerializer):
         pattern = r'^[\w.-]+@[a-zA-Z_]+?\.[a-zA-Z]{2,}$'
         if not re.match(pattern, value):
             raise serializers.ValidationError("Invalid email format")
+        
+        # Check if the email already exists
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with that email already exists.")
+        
         return value
 
     def validate_username(self, value):
