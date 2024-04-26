@@ -47,7 +47,7 @@ class UserSerializer(serializers.ModelSerializer):
         
         # Check if the email already exists
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("A user with that email already exists.")
+            raise serializers.ValidationError("The given e-mail is already in use.")
         
         return value
 
@@ -60,32 +60,3 @@ class UserSerializer(serializers.ModelSerializer):
         if len(value) < 6:
             raise serializers.ValidationError("Password must be at least 6 characters long")
         return value
-        '''
-    def create...
-        password = validated_data.pop('password', None)
-        # Create the user instance
-        user = User.objects.create(**validated_data)
-        # Hashing the user password
-        if password:
-            user.set_password(password)
-        
-        # Generate a new refresh token for the session
-        refresh = RefreshToken.for_user(user)
-        user.sessiontoken = str(refresh)
-        
-        user.save()
-        return user
-        '''
-        
-
-        '''
-    def update(self, instance, validated_data):
-        password = validated_data.pop('password', None)
-        if password:
-            instance.set_password(password)
-        # Set other attributes
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
-        '''

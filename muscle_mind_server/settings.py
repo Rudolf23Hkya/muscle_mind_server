@@ -149,6 +149,6 @@ SIMPLE_JWT = {
 }
 
 AUTHENTICATION_BACKENDS = [
-    'path.to.your.EmailOrUsernameModelBackend',
+    'testing.auth_backend.EmailOrUsernameModelBackend',
     'django.contrib.auth.backends.ModelBackend',  # Optional, keep for fallback to default behavior
 ]
