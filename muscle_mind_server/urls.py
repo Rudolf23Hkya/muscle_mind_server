@@ -23,6 +23,8 @@ urlpatterns = [
     path('regUser/', views.register_new_user),
     path('loginUser/', views.login_user),
     path('loginUser_google/', views.login_with_google),
+    path('user_with_access_token/', views.user_data_with_access_token),
+    path('access_token_with_refresh_token/', views.access_token_with_refresh_token),#TODO
     path('workout_done/', views.workout_done),
     path('get_calories/', views.get_calories),
     path('add_calories/', views.add_calories),

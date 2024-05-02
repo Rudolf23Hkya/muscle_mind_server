@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+SITE_ID = 1
 
 # Application definition
 
@@ -39,10 +40,15 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles'
+    'django.contrib.staticfiles',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -141,7 +147,7 @@ from datetime import timedelta
 
 SIMPLE_JWT = {
    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-   'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+   'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
    'ROTATE_REFRESH_TOKENS': True,
    'BLACKLIST_AFTER_ROTATION': True,
    'ALGORITHM': 'HS256',
@@ -151,4 +157,7 @@ SIMPLE_JWT = {
 AUTHENTICATION_BACKENDS = [
     'testing.auth_backend.EmailOrUsernameModelBackend',
     'django.contrib.auth.backends.ModelBackend',  # Optional, keep for fallback to default behavior
+    'allauth.account.auth_backends.AuthenticationBackend', #Google authentication
 ]
+
+LOGIN_REDIRECT_URL = '/'
