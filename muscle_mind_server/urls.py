@@ -16,18 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from testing import views_auth
 from testing import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('regUser/', views.register_new_user),
-    path('loginUser/', views.login_user),
-    path('loginUser_google/', views.login_with_google),
-    path('user_with_access_token/', views.user_data_with_access_token),
-    path('access_token_with_refresh_token/', views.access_token_with_refresh_token),
-    path('workout_done/', views.workout_done),
+    #authentication
+    path('regUser/', views_auth.register_new_user),
+    path('loginUser/', views_auth.login_user),
+    path('loginUser_google/', views_auth.login_with_google),
+    path('get_refresh_token/', views_auth.get_refresh_token),
+    #data layer
+    path('get_user_data/', views.get_user_data),
+    path('add_workout_data/', views.add_workout_data),
     path('get_calories/', views.get_calories),
-    path('add_calories/', views.add_eaten_calories),
-    path('add_burnt_calories/', views.add_burnt_calories),
+    path('add_calories/', views.add_calories),
     path('get_stats/', views.get_stats)
 ]

@@ -2,6 +2,7 @@ from enum import Enum
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 #ENUM DEF
 class Category(Enum):
@@ -43,6 +44,7 @@ class MuscleGroup(Enum):
     @classmethod
     def choices(cls):
         return [(item.value, item.name) for item in cls]
+
     
 #DATA ORM-s
 class Exercise(models.Model):
@@ -51,9 +53,10 @@ class Exercise(models.Model):
     category = models.CharField(max_length=50, choices=Category.choices())
     musclegroup = models.CharField(max_length=50, choices=MuscleGroup.choices())
     experiencelevel = models.CharField(max_length=50, choices=ExperienceLevel.choices())
-    duration = models.IntegerField()
     caloriesburnt = models.IntegerField()
     drawablepicname = models.CharField(max_length=255)
+    reps = models.IntegerField(null=True, blank=True)
+    duration = models.IntegerField(null=True, blank=True)
     
     def __str__(self):
         return self.name
@@ -108,17 +111,16 @@ class UserDailyPerformance(models.Model):
 
 
 class UserWorkout(models.Model):
-    user = models.OneToOneField(User, models.DO_NOTHING,primary_key=True)
-    workout = models.ForeignKey(Workout, models.DO_NOTHING)
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE,db_column='user_id')
+    workout = models.ForeignKey(Workout, on_delete=models.CASCADE,db_column='workout_id')
     
     def __str__(self):
-        return self.user + " - " + self.workout
+        return self.user.username + " - " + self.workout.name
 
     class Meta:
         managed = False
         db_table = 'user_workout'
-        # Composite primary key constraint (user_id, workout_id)
-        unique_together = (('user_id', 'workout_id'),)
 
 #Just the workouts
 class UserWorkoutHistory(models.Model):
