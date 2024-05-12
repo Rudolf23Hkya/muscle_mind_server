@@ -44,7 +44,6 @@ class MuscleGroup(Enum):
     @classmethod
     def choices(cls):
         return [(item.value, item.name) for item in cls]
-
     
 #DATA ORM-s
 class Exercise(models.Model):
@@ -151,3 +150,17 @@ class WorkoutExercise(models.Model):
         db_table = 'workout_exercise'
         # Composite primary key constraint (userid, workoutid)
         unique_together = (('workout_id', 'exercise_id'),)
+
+class Disease(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    cardiovascular_d = models.BooleanField(default=False)
+    bad_knee = models.BooleanField(default=False)
+    asthma = models.BooleanField(default=False)
+    osteoporosis = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.user.username + "'s diseases"
+
+    class Meta:
+        managed = False
+        db_table = 'disease'

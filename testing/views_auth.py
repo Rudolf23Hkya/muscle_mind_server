@@ -15,7 +15,7 @@ from.api_response_generators import *
 def register_new_user(request):
     #Registering new user
     try:
-        user_serializer = UserSerializer(data=request.data)
+        user_serializer = UserSerializer(data=request.data['user'])
         if user_serializer.is_valid():
             user = user_serializer.save()
             user.set_password(user_serializer.validated_data['password'])
