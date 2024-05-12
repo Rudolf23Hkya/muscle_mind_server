@@ -2,8 +2,6 @@ from enum import Enum
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 #ENUM DEF
 class Category(Enum):
@@ -98,12 +96,11 @@ class UserDailyPerformance(models.Model):
     user = models.ForeignKey(User, models.DO_NOTHING)
     date = models.DateField()
     calorie_intake = models.IntegerField()
-    hydration_ml = models.IntegerField()
-    time_logged_in_minutes = models.IntegerField()
     time_working_out_minutes = models.IntegerField()
+    calories_burnt = models.IntegerField()
     
     def __str__(self):
-        return self.date + " " + self.user
+        return f"{self.date} {self.user}"
 
     class Meta:
         managed = False
