@@ -152,14 +152,14 @@ class WorkoutExercise(models.Model):
         unique_together = (('workout_id', 'exercise_id'),)
 
 class Disease(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    user = models.OneToOneField(UserProfile, on_delete=models.CASCADE, primary_key=True)
     cardiovascular_d = models.BooleanField(default=False)
     bad_knee = models.BooleanField(default=False)
     asthma = models.BooleanField(default=False)
     osteoporosis = models.BooleanField(default=False)
     
     def __str__(self):
-        return self.user.username + "'s diseases"
+        return self.user.user.username + "'s diseases"
 
     class Meta:
         managed = False

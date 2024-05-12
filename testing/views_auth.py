@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 
-from .models import User
+from .models import User,Disease
 from .serializers import UserSerializer,UserProfileSerializer
 from.api_response_generators import *
 
@@ -21,10 +21,21 @@ def register_new_user(request):
             user.set_password(user_serializer.validated_data['password'])
             user.save()
 
-            profile_data = {**request.data, 'user': user.pk}
+            profile_data = {**request.data['user'], 'user': user.pk}
             profile_serializer = UserProfileSerializer(data=profile_data)
             if profile_serializer.is_valid():
                 profile = profile_serializer.save()
+                
+                 # Process disease data from request
+                disease_data = request.data.get('disease', {})
+                disease_instance = Disease(
+                    user=profile,# It s connected to the User table not the auth_user
+                    cardiovascular_d=disease_data.get('cardiovascular_d', 'False').lower() == 'true',
+                    bad_knee=disease_data.get('bad_knee', 'False').lower() == 'true',
+                    asthma=disease_data.get('asthma', 'False').lower() == 'true',
+                    osteoporosis=disease_data.get('osteoporosis', 'False').lower() == 'true'
+                )
+                disease_instance.save()
                 
                 # Generate tokens
                 refresh = RefreshToken.for_user(user)
@@ -38,7 +49,6 @@ def register_new_user(request):
                 return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except:
         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    return Response("Invalid .json structure!", status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])    
 def login_user(request):
