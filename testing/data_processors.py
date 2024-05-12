@@ -42,3 +42,22 @@ def add_user_w_time(user_id, min=0):
         obj.time_working_out_minutes = F('time_working_out_minutes') + min
     obj.save()
 
+def process_add_eaten_calorie_data(request):
+    calorie_data = request.data.get('calorie_data', {})
+    if not calorie_data.get('calories'):
+        raise ValueError('Calories count is required')
+    
+    cal = calorie_data.get('calories')
+    add_user_d_cal_eaten(request.user.id,cal)
+    
+    return {'calories': cal}
+
+def process_wourout_done(request):
+    calorie_data = request.data.get('calorie_data', {})
+    if not calorie_data.get('calories'):
+        raise ValueError('Calories count is required')
+    
+    cal = calorie_data.get('calories')
+    add_user_d_cal_burnt(request.user.id,cal)
+    
+    return {'calories': cal}

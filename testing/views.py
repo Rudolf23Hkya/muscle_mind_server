@@ -47,9 +47,32 @@ def generate_auth_data(refresh, access):
     }
     return response_data
 
+def generic_api_handler(request, data_processor):
+    """
+    Általános függvény az API hívások kezelésére, amely magában foglalja az autentikációt,
+    adatfeldolgozást és alap hibakezelést.
+
+    Args:
+        request: Az HTTP kérés objektuma.
+        data_processor: Egy függvény, amely a request adatok feldolgozásáért felelős,
+                        és kivételt dob, ha hiba történik.
+
+    Returns:
+        Response: A REST válasz, amely tartalmazhat sikert vagy hibát.
+    """
+
+    # Az adatfeldolgozó függvényt próbáljuk meg hívni, amely elvégzi a szükséges műveleteket.
+    try:
+        # A data_processor kell, hogy visszaadja az adatokat a válaszhoz, és kivételt dobjon, ha hiba történik.
+        result = data_processor(request)
+        return Response({'message': 'Success', 'data': result}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        # Itt kezeljük a kivételeket, amik a data_processor függvény futtatása közben keletkeznek.
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 #Data validation done in the serializers
-
 @api_view(['POST'])
 def register_new_user(request):
     #Registering new user
@@ -164,53 +187,14 @@ def get_calories(request):
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def add_calories(request):
-    user = request.user  # Authenticated user from the JWT token
-    # Getting data from request
-    calorie_data = request.data.get('calorie_data', {})
-
-    # Checking if necessary calorie data is present
-    if not calorie_data.get('calories'):
-        return Response({'error': 'Calories count is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        # You can adjust the field names based on your actual model
-        cal = calorie_data.get('calories')
-
-        # Data operations abstracted
-        add_user_d_cal_eaten(user.id,cal)
-
-        # Respond with success and the calorie data as confirmation
-        return Response({'message': 'Calorie data posted successfully', 'data': calorie_data}, status=status.HTTP_201_CREATED)
-
-    except Exception as e:
-        # If there's an error while saving or processing data
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+def add_eaten_calories(request):
+    return generic_api_handler(request, process_add_eaten_calorie_data)
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_burnt_calories(request):
-    user = request.user  # Authenticated user from the JWT token
-    # Getting data from request
-    calorie_data = request.data.get('calorie_data', {})
+    return generic_api_handler(request, process_wourout_done)
 
-    # Checking if necessary calorie data is present
-    if not calorie_data.get('calories'):
-        return Response({'error': 'Calories count is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        # You can adjust the field names based on your actual model
-        cal = calorie_data.get('calories')
-
-        # Data operations abstracted
-        add_user_d_cal_burnt(user.id,cal)
-
-        # Respond with success and the calorie data as confirmation
-        return Response({'message': 'Calorie data posted successfully', 'data': calorie_data}, status=status.HTTP_201_CREATED)
-
-    except Exception as e:
-        # If there's an error while saving or processing data
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 #This view returns this week s workout data for the user starting with monday
 @api_view(['POST'])

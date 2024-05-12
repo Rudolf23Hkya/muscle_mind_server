@@ -27,7 +27,7 @@ urlpatterns = [
     path('access_token_with_refresh_token/', views.access_token_with_refresh_token),
     path('workout_done/', views.workout_done),
     path('get_calories/', views.get_calories),
-    path('add_calories/', views.add_calories),
+    path('add_calories/', views.add_eaten_calories),
     path('add_burnt_calories/', views.add_burnt_calories),
     path('get_stats/', views.get_stats)
 ]
