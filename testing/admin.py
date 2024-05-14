@@ -10,10 +10,3 @@ admin.site.register(UserWorkoutHistory)
 admin.site.register(WorkoutExercise)
 admin.site.register(Disease)
 admin.site.register(Workout)
-'''
-class WorkoutAdmin(admin.ModelAdmin):
-    form = WorkoutForm
-    
-# Registering the Workout model with the WorkoutAdmin class
-admin.site.register(Workout, WorkoutAdmin)
-'''

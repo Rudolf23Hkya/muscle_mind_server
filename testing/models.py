@@ -85,12 +85,12 @@ class Workout(models.Model):
     experiencelevel = models.CharField(max_length=50, choices=ExperienceLevel.choices())
     drawablepicname = models.CharField(max_length=255)
     musclegroup = ArrayField(
-        models.CharField(max_length=10, choices=MuscleGroup.choices()),
+        models.CharField(max_length=100),
         blank=True,
         default=list
     )
     category = ArrayField(
-        models.CharField(max_length=50, choices=Category.choices()),
+        models.CharField(max_length=100),
         blank=True,
         default=list
     )
@@ -99,6 +99,28 @@ class Workout(models.Model):
         blank=True,
         default=list
     )
+    def save(self, *args, **kwargs):
+        # Convert to uppercase
+        self.name = self.name
+        self.experiencelevel = self.experiencelevel
+        self.drawablepicname = self.drawablepicname
+        self.musclegroup = [mg.upper() for mg in self.musclegroup]
+        self.category = [cat.upper() for cat in self.category]
+
+        # Validate musclegroup and category
+        valid_musclegroups = {item.value for item in MuscleGroup}
+        valid_categories = {item.value for item in Category}
+
+        for mg in self.musclegroup:
+            if mg not in valid_musclegroups:
+                raise ValueError(f"Invalid musclegroup value: {mg}")
+
+        for cat in self.category:
+            if cat not in valid_categories:
+                raise ValueError(f"Invalid category value: {cat}")
+
+        # Call the original save method
+        super(Workout, self).save(*args, **kwargs)
     
     def __str__(self):
         return self.name
