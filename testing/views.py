@@ -22,26 +22,24 @@ from rest_framework.permissions import IsAuthenticated
 
 def generic_api_handler(request, data_processor):
     """
-    Általános függvény az API hívások kezelésére, amely magában foglalja az autentikációt,
-    adatfeldolgozást és alap hibakezelést.
+    General function for handling API calls, including authentication,
+    data processing, and basic error handling.
 
     Args:
-        request: Az HTTP kérés objektuma.
-        data_processor: Egy függvény, amely a request adatok feldolgozásáért felelős,
-                        és kivételt dob, ha hiba történik.
+        request: The HTTP request object.
+        data_processor: A function responsible for processing the request data,
+                        and raising an exception if an error occurs.
 
     Returns:
-        Response: A REST válasz, amely tartalmazhat sikert vagy hibát.
+        Response: The REST response, which may contain success or error information.
     """
 
-    # Az adatfeldolgozó függvényt próbáljuk meg hívni, amely elvégzi a szükséges műveleteket.
+    # Calling the data processing function
     try:
-        # A data_processor kell, hogy visszaadja az adatokat a válaszhoz, és kivételt dobjon, ha hiba történik.
         result = data_processor(request)
         return Response({'message': 'Success', 'data': result}, status=status.HTTP_200_OK)
 
     except Exception as e:
-        # Itt kezeljük a kivételeket, amik a data_processor függvény futtatása közben keletkeznek.
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -80,14 +78,18 @@ def get_calories(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_calories(request):
-    return generic_api_handler(request, process_add_eaten_calorie_data)
+    return generic_api_handler(request, add_eaten_calorie_data)
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_workout_data(request):
     return generic_api_handler(request, process_wourout_done)
 
-    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_recom_workouts(request):
+    return generic_api_handler(request, process_recom_workouts)
+
 #This view returns this week s workout data for the user starting with monday
 @api_view(['POST'])
 def get_stats(request):

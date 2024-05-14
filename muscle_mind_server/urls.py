@@ -31,5 +31,7 @@ urlpatterns = [
     path('add_workout_data/', views.add_workout_data),
     path('get_calories/', views.get_calories),
     path('add_calories/', views.add_calories),
-    path('get_stats/', views.get_stats)
+    path('get_stats/', views.get_stats),
+    
+    path('get_recom_workouts/', views.get_recom_workouts)
 ]

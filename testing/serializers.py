@@ -41,7 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}  # Making password write-only
         
     def validate_email(self, value):
-        pattern = r'^[\w.-]+@[a-zA-Z_]+?\.[a-zA-Z]{2,}$'
+        pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
         if not re.match(pattern, value):
             raise serializers.ValidationError("Invalid email format")
         

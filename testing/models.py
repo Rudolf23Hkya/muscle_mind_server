@@ -84,6 +84,21 @@ class Workout(models.Model):
     name = models.CharField(unique=True, max_length=50)
     experiencelevel = models.CharField(max_length=50, choices=ExperienceLevel.choices())
     drawablepicname = models.CharField(max_length=255)
+    musclegroup = ArrayField(
+        models.CharField(max_length=10, choices=MuscleGroup.choices()),
+        blank=True,
+        default=list
+    )
+    category = ArrayField(
+        models.CharField(max_length=50, choices=Category.choices()),
+        blank=True,
+        default=list
+    )
+    exercise_order = ArrayField(
+        models.IntegerField(),
+        blank=True,
+        default=list
+    )
     
     def __str__(self):
         return self.name
@@ -91,7 +106,6 @@ class Workout(models.Model):
     class Meta:
         managed = False
         db_table = 'workout'
-
 
 class UserDailyPerformance(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -113,6 +127,7 @@ class UserWorkout(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE,db_column='user_id')
     workout = models.ForeignKey(Workout, on_delete=models.CASCADE,db_column='workout_id')
+    weights = ArrayField(models.FloatField(), default=list)
     
     def __str__(self):
         return self.user.username + " - " + self.workout.name
@@ -138,18 +153,17 @@ class UserWorkoutHistory(models.Model):
 
 
 class WorkoutExercise(models.Model):
-    workout = models.OneToOneField(Workout, on_delete=models.DO_NOTHING, primary_key=True)
+    id = models.BigAutoField(primary_key=True)
+    workout = models.ForeignKey(Workout, on_delete=models.DO_NOTHING)
     exercise = models.ForeignKey(Exercise, models.DO_NOTHING)
-    exercise_order = ArrayField(models.IntegerField(),default=list)
     
     def __str__(self):
-        return self.workout + " - " + self.exercise + "ord: " + self.exercise_order
+        return self.workout.name + " - " + self.exercise.name
 
     class Meta:
         managed = False
         db_table = 'workout_exercise'
-        # Composite primary key constraint (userid, workoutid)
-        unique_together = (('workout_id', 'exercise_id'),)
+        unique_together = ('workout', 'exercise')
 
 class Disease(models.Model):
     user = models.OneToOneField(UserProfile, on_delete=models.CASCADE, primary_key=True)

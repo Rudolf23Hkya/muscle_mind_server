@@ -13,7 +13,6 @@ from.api_response_generators import *
 #Data validation done in the serializers
 @api_view(['POST'])
 def register_new_user(request):
-    #Registering new user
     try:
         user_serializer = UserSerializer(data=request.data['user'])
         if user_serializer.is_valid():
@@ -25,30 +24,32 @@ def register_new_user(request):
             profile_serializer = UserProfileSerializer(data=profile_data)
             if profile_serializer.is_valid():
                 profile = profile_serializer.save()
-                
-                 # Process disease data from request
+
+                # Process disease data from request
                 disease_data = request.data.get('disease', {})
                 disease_instance = Disease(
-                    user=profile,# It s connected to the User table not the auth_user
+                    user=profile,  # It's connected to the UserProfile table not the auth_user
                     cardiovascular_d=disease_data.get('cardiovascular_d', 'False').lower() == 'true',
                     bad_knee=disease_data.get('bad_knee', 'False').lower() == 'true',
                     asthma=disease_data.get('asthma', 'False').lower() == 'true',
                     osteoporosis=disease_data.get('osteoporosis', 'False').lower() == 'true'
                 )
                 disease_instance.save()
-                
+
                 # Generate tokens
                 refresh = RefreshToken.for_user(user)
                 access = refresh.access_token
-                
+
                 response = generate_full_auth_data(user, profile, refresh, access)
-                
-                return Response(response,status=status.HTTP_201_CREATED)
+
+                return Response(response, status=status.HTTP_201_CREATED)
             else:
                 user.delete()  # Cleanup if profile creation fails
                 return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except:
-        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])    
 def login_user(request):
