@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 
 from .models import User, UserDailyPerformance
-from .serializers import UserSerializer,UserProfileSerializer
+from .serializers import UserSerializer,WorkoutSerializer
 from .data_processors import *
 from.api_response_generators import *
 
@@ -17,7 +17,6 @@ import datetime
 from datetime import timedelta
 
 from rest_framework.permissions import IsAuthenticated
-
 
 
 def generic_api_handler(request, data_processor):
@@ -88,7 +87,16 @@ def add_workout_data(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_recom_workouts(request):
-    return generic_api_handler(request, process_recom_workouts)
+    user_id = request.user.id
+    
+    weightlifting = request.GET.get('weightlifting')
+    trx = request.GET.get('trx')
+    
+    workouts = get_best_3_workout(user_id,weightlifting,trx)
+        
+    # Serialize the data and respond
+    serializer = WorkoutSerializer(workouts, many=True)
+    return JsonResponse(serializer.data, safe=False)
 
 #This view returns this week s workout data for the user starting with monday
 @api_view(['POST'])

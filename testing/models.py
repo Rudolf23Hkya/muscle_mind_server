@@ -2,7 +2,6 @@ from enum import Enum
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 
 #ENUM DEF
 class Category(Enum):
@@ -25,6 +24,23 @@ class ExperienceLevel(Enum):
     @classmethod
     def choices(cls):
         return [(item.value, item.name) for item in cls]
+
+    # Used for workout recommendation(+1 level max)
+    @classmethod
+    def get_allowed_levels(cls, current_level):
+        levels = list(cls)
+        allowed_levels = []
+        current_index = levels.index(cls[current_level])
+
+        # Add all lower and current levels
+        for level in levels[:current_index + 1]:
+            allowed_levels.append(level.value)
+        
+        # Add the next level if it exists
+        if current_index + 1 < len(levels):
+            allowed_levels.append(levels[current_index + 1].value)
+
+        return allowed_levels
 
 class Gender(Enum):
     MALE = 'MALE'
@@ -157,21 +173,6 @@ class UserWorkout(models.Model):
     class Meta:
         managed = False
         db_table = 'user_workout'
-
-#Just the workouts
-class UserWorkoutHistory(models.Model):
-    workout_history_id = models.AutoField(primary_key=True)
-    daily_performance = models.ForeignKey(UserDailyPerformance, models.DO_NOTHING)
-    workout = models.OneToOneField(Workout, models.DO_NOTHING)
-    duration_minutes = models.IntegerField()
-    calories_burned = models.IntegerField()
-    
-    def __str__(self):
-        return self.workout + "dur: " + self.duration_minutes
-
-    class Meta:
-        managed = False
-        db_table = 'user_workout_history'
 
 
 class WorkoutExercise(models.Model):

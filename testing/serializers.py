@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 import re
 
-from .models import UserProfile
+from .models import UserProfile,Workout
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,3 +60,8 @@ class UserSerializer(serializers.ModelSerializer):
         if len(value) < 6:
             raise serializers.ValidationError("Password must be at least 6 characters long")
         return value
+    
+class WorkoutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Workout
+        fields = '__all__'

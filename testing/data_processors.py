@@ -1,7 +1,12 @@
 from django.db.models import F
 from datetime import date
+from django.db.models import QuerySet
+from django.contrib.auth.models import User
+# Models
+from .models import UserDailyPerformance,UserProfile,Disease,Workout
 
-from .models import UserDailyPerformance
+# Enums
+from .models import ExperienceLevel,Category,MuscleGroup
 
 def get_or_create_user_daily_performance(id):
     """
@@ -82,41 +87,57 @@ def generate_workout_durations(user):
     
     return exercise_weights
 
-def generate_exercises(user_id):
-    """
-    This function select the best 3 base workout plans 
-    stored in our database based on:
-    - BMI(weight/height^2) - More or less Cardio focus
-    - Diseases
-        -- No LOWER_BODY training for bed knee
-        -- No EXPERIENCED or PROFESSIONAL cardio for hearth problems
-    - Experience level
-    """
-    user_ = UserProfile.objects.get(user=user)
-    # workout_sessions = WorkoutSession.objects.filter(user=user)
+# Returns the 3 most suitable workouts for the user
+def get_best_3_workout(user_id, weightlifting, trx):
+    # Step 0: Get user from db
+    user = User.objects.get(id=user_id)
+    user_profile = UserProfile.objects.get(user=user)
     
-    # Data processing here
-    # Példa: visszaadunk egy listát az edzés gyakorlatainak hosszával [0..1] tartományban
-    exercise_weights = [0.5, 0.7, 0.3, 0.9, 0.6]  # Példa float lista
-    
-    return exercise_weights
+    # Step 1: Start with all workouts
+    workouts = Workout.objects.all()
 
-#TODO
-def process_recom_workouts(request):
-    # These check what kind of equipment does the user have
-    weightlifting = request.GET.get('weightlifting')
-    trx = request.GET.get('trx')
-    # Generate exercises
+    # Step 2: Exclude workouts based on equipment availability
+    if not weightlifting:
+        workouts = workouts.exclude(category__contains=[Category.WEIGHTLIFTING.value])
+    if not trx:
+        workouts = workouts.exclude(category__contains=[Category.TRX.value])
     
+    # Step 3: Exclude workouts based on Diseases
+    user_diseases = Disease.objects.get(user=user_profile)
+    # Exclude workouts that target the lower body if the user has a bad knee
+    if user_diseases.bad_knee:
+        workouts = workouts.exclude(musclegroup__contains=[MuscleGroup.LOWER_BODY.value])
+
+    # Exclude high intensity workouts if the user has cardiovascular disease
+    if user_diseases.cardiovascular_d:
+        workouts = workouts.exclude(category__contains=[ExperienceLevel.PROFESSIONAL.value])
+
+    # Exclude long high intensity workouts if the user has asthma
+    if user_diseases.asthma:
+        workouts = workouts.exclude(category__contains=[ExperienceLevel.PROFESSIONAL.value])
+        # exercise_order lenght is greater than 5
+        workouts = workouts.exclude(exercise_order__length__gt=5)
+
+    # Exclude weightlifting workouts if the user has osteoporosis
+    if user_diseases.osteoporosis:
+        workouts = workouts.exclude(category__contains=[Category.WEIGHTLIFTING.value])
     
-    weights = generate_workout_durations(request.user.id)
-    if level:
-        #workouts = Workout.objects.filter(level=level)
-        print("hello")
-    else:
-        #workouts = Workout.objects.all()
-        print("hello")
+    # Step 4: Exclude workouts based on Experience(+1 level max)
+    user_experience_level = user_profile.experiencelevel
+    allowed_levels = ExperienceLevel.get_allowed_levels(user_experience_level)
+
+    workouts = workouts.filter(experiencelevel__in=allowed_levels)
     
-    # Serializáljuk az adatokat a válaszhoz
-    #serializer = WorkoutSerializer(workouts, many=True)
-    return "haki"
+    # Step 5: Adjust the number of workouts to be 3 always
+    workout_count = workouts.count()
+    
+    if workout_count > 3:
+        workouts = workouts.order_by('?')[:3]  # Randomly select 3 workouts if more than 3
+    elif workout_count < 3:
+        remaining_count = 3 - workout_count
+        additional_workouts = Workout.objects.exclude(id__in=workouts.values_list('id', flat=True)).order_by('?')[:remaining_count]
+        workouts = list(workouts) + list(additional_workouts)
+    
+    if isinstance(workouts, QuerySet):
+        workouts = list(workouts)    
+    return workouts
