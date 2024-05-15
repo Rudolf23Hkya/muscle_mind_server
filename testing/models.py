@@ -41,6 +41,16 @@ class ExperienceLevel(Enum):
             allowed_levels.append(levels[current_index + 1].value)
 
         return allowed_levels
+        # New method to get the numeric value
+    @classmethod
+    def get_num(cls, level):
+        level_map = {
+            cls.NEW: 0,
+            cls.INTERMEDIATE: 1,
+            cls.EXPERIENCED: 2,
+            cls.PROFESSIONAL: 3
+        }
+        return level_map.get(level, None)
 
 class Gender(Enum):
     MALE = 'MALE'
@@ -166,6 +176,7 @@ class UserWorkout(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE,db_column='user_id')
     workout = models.ForeignKey(Workout, on_delete=models.CASCADE,db_column='workout_id')
     weights = ArrayField(models.FloatField(), default=list)
+    do_weekly = models.IntegerField()
     
     def __str__(self):
         return self.user.username + " - " + self.workout.name

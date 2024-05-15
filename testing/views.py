@@ -7,8 +7,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 
-from .models import User, UserDailyPerformance
+from .models import UserDailyPerformance,UserWorkout
 from .serializers import UserSerializer,WorkoutSerializer
 from .data_processors import *
 from.api_response_generators import *
@@ -94,9 +95,35 @@ def get_recom_workouts(request):
     
     workouts = get_best_3_workout(user_id,weightlifting,trx)
         
-    # Serialize the data and respond
+    # Serializeing the data and respond
     serializer = WorkoutSerializer(workouts, many=True)
     return JsonResponse(serializer.data, safe=False)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def post_user_workout(request):
+    user_id = request.user.id
+    
+    try:
+        workout_id = int(request.data.get('workout').get('workoutid'))
+        do_weekly = int(request.data.get('do_weekly', 0))
+
+        # Checkig if the workout exists in the database
+        weights = calculate_weights(workout_id,user_id)
+        
+        if weights and user_id:
+            # Saving the posted UserWorkout
+            UserWorkout.objects.create(
+                user=user_id,
+                workout=workout_id,
+                weights=weights,
+                do_weekly=do_weekly
+            )
+        
+        # Válasz vissza a létrehozott bejegyzés adataival
+        return Response({'workoutid': workout_id, 'do_weekly': do_weekly}, status=status.HTTP_201_CREATED)
+    
+    except (ValueError, AttributeError, Workout.DoesNotExist) as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 #This view returns this week s workout data for the user starting with monday
 @api_view(['POST'])

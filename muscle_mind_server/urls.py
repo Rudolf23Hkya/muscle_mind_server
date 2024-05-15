@@ -33,5 +33,6 @@ urlpatterns = [
     path('add_calories/', views.add_calories),
     path('get_stats/', views.get_stats),
     
-    path('get_recom_workouts/', views.get_recom_workouts)
+    path('get_recom_workouts/', views.get_recom_workouts),
+    path('post_user_workout/', views.post_user_workout),
 ]

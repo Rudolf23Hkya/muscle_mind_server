@@ -3,10 +3,14 @@ from datetime import date
 from django.db.models import QuerySet
 from django.contrib.auth.models import User
 # Models
-from .models import UserDailyPerformance,UserProfile,Disease,Workout
+from .models import UserDailyPerformance,UserProfile,Disease,Workout,Exercise
 
 # Enums
 from .models import ExperienceLevel,Category,MuscleGroup
+
+#Math imports
+from scipy.interpolate import interp1d
+import numpy as np
 
 def get_or_create_user_daily_performance(id):
     """
@@ -47,8 +51,6 @@ def add_user_w_time(user_id, min=0):
         obj.time_working_out_minutes = F('time_working_out_minutes') + min
     obj.save()
 
-# POST view handlers
-
 def add_eaten_calorie_data(request):
     calorie_data = request.data.get('calorie_data', {})
     if not calorie_data.get('calories'):
@@ -57,41 +59,10 @@ def add_eaten_calorie_data(request):
     cal = calorie_data.get('calories')
     add_user_d_cal_eaten(request.user.id,cal)
 
-# GET view handlers
-
-#TODO
-def process_wourout_done(request):
-    calorie_data = request.data.get('calorie_data', {})
-    if not calorie_data.get('calories'):
-        raise ValueError('Calories count is required')
-    
-    cal = calorie_data.get('calories')
-    add_user_d_cal_burnt(request.user.id,cal)
-    
-    return {'calories': cal}
-
-def generate_workout_durations(user):
-    """
-    This function generates weights for exercises based on the user s data, like:
-    - Age
-    - BMI(weight/height^2)
-    - Diseases
-    - Experience level
-    """
-    user_ = UserProfile.objects.get(user=user)
-    # workout_sessions = WorkoutSession.objects.filter(user=user)
-    
-    # Data processing here
-    # Példa: visszaadunk egy listát az edzés gyakorlatainak hosszával [0..1] tartományban
-    exercise_weights = [0.5, 0.7, 0.3, 0.9, 0.6]  # Példa float lista
-    
-    return exercise_weights
-
 # Returns the 3 most suitable workouts for the user
 def get_best_3_workout(user_id, weightlifting, trx):
     # Step 0: Get user from db
-    user = User.objects.get(id=user_id)
-    user_profile = UserProfile.objects.get(user=user)
+    user_profile = UserProfile.objects.get(user=user_id)
     
     # Step 1: Start with all workouts
     workouts = Workout.objects.all()
@@ -141,3 +112,103 @@ def get_best_3_workout(user_id, weightlifting, trx):
     if isinstance(workouts, QuerySet):
         workouts = list(workouts)    
     return workouts
+
+# Calculating the weights for each exercise, to make more personal for the users
+def calculate_weights(workout_id,user_id):
+    try:
+        workout = Workout.objects.get(workoutid=workout_id)
+        user_profile = UserProfile.objects.get(user=user_id)
+    except Workout.DoesNotExist:
+        return False
+
+    weights = []
+    # User data for the calculation
+    age = user_profile.age
+    bmi = user_profile.weight / (user_profile.height ** 2)
+    user_experience_level = user_profile.experiencelevel
+    
+    for exercise_id in workout.exercise_order:
+        try:
+            exercise = Exercise.objects.get(exerciseid=exercise_id)
+            
+            # Weight calculation logic
+            exercise_experience_level = exercise.experiencelevel
+            
+            weight = calculate_weight(exercise_experience_level,age,bmi,user_experience_level)
+            
+            weights.append(weight)
+        except Exercise.DoesNotExist:
+            return False
+
+    return weights
+# Returns a float(max: 2, min: 0 (diseabled Exercise))
+# by default no exercise is diseabled
+def calculate_weight(exercise_experience_level,age,bmi,user_experience_level):
+    # Converting the Enums to numbers
+    exercise_level = ExperienceLevel.get_num(ExperienceLevel[exercise_experience_level])
+    user_level = ExperienceLevel.get_num(ExperienceLevel[user_experience_level])
+    
+    # If the value is > 1 the exercise is easy for the user and needs boosting
+    # If the value is < 1 the exercise is hard for the user and needs nerfing
+    multiplier = 1.0
+    
+    # Experience
+    level_difference = user_level - exercise_level
+    
+    if level_difference == 1:
+        multiplier += 0.3
+    elif level_difference >= 2:
+        multiplier += 0.6
+    elif level_difference == -1:
+        multiplier -= 0.3
+    elif level_difference <= -2:
+        multiplier -= 0.6
+    
+    # Age
+    # -For very young and old shorter Exercise
+    multiplier += interpolate_age(age)
+    # Bmi
+    # -For larger bmi shorter Exercise
+    multiplier += interpolate_bmi(bmi)
+    
+    # Normalization    
+    if(multiplier < 0):
+        multiplier = 0.1
+        
+    if(multiplier > 2):
+        multiplier = 2
+
+    return multiplier
+
+# Math functions
+
+# Age
+x_points_age = np.array([12, 20, 120])
+y_points_age = np.array([-0.5, 0.5, -0.5])
+interpolation_function_age = interp1d(x_points_age, y_points_age)
+
+def interpolate_age(x):
+    if x < 12 or x > 120:
+        raise ValueError("The input is out of the allowed range [12, 120].")
+
+    # Calc the value
+    y_value = interpolation_function_age(x)
+
+    return y_value
+
+#BMI
+x_points_bmi = np.array([0, 10, 18, 24, 40, 50])
+y_points_bmi = np.array([-0.5, -0.5, 0.5, 0.5, -0.5, -0.5])
+interpolation_function_bmi = interp1d(x_points_bmi, y_points_bmi, kind='quadratic')
+
+def interpolate_bmi(x):
+    if x <= 0:
+        raise ValueError("The input needs to be positive.")
+    # Extremly large BMI
+    elif x > 45 or x < 5:
+        return -0.6
+
+    # Calc the value
+    y_value = interpolation_function_bmi(x)
+
+    return y_value
