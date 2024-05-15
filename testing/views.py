@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 
 from .models import UserDailyPerformance,UserWorkout
-from .serializers import UserSerializer,WorkoutSerializer
+from .serializers import UserSerializer,WorkoutSerializer,UserWorkoutSerializer
 from .data_processors import *
 from.api_response_generators import *
 
@@ -113,8 +113,8 @@ def post_user_workout(request):
         if weights and user_id:
             # Saving the posted UserWorkout
             UserWorkout.objects.create(
-                user=user_id,
-                workout=workout_id,
+                user=UserProfile.objects.get(user=user_id),
+                workout=Workout.objects.get(workoutid=workout_id),
                 weights=weights,
                 do_weekly=do_weekly
             )
@@ -124,6 +124,15 @@ def post_user_workout(request):
     
     except (ValueError, AttributeError, Workout.DoesNotExist) as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_workout(request):
+    user_id = request.user.id
+    user_profile = UserProfile.objects.get(user=user_id)
+    user_workouts = UserWorkout.objects.filter(user=user_profile)
+    serializer = UserWorkoutSerializer(user_workouts, many=True)
+    return Response(serializer.data)
 
 #This view returns this week s workout data for the user starting with monday
 @api_view(['POST'])

@@ -150,19 +150,19 @@ def calculate_weight(exercise_experience_level,age,bmi,user_experience_level):
     
     # If the value is > 1 the exercise is easy for the user and needs boosting
     # If the value is < 1 the exercise is hard for the user and needs nerfing
-    multiplier = 1.0
+    multiplier = 1
     
     # Experience
     level_difference = user_level - exercise_level
     
     if level_difference == 1:
-        multiplier += 0.3
+        multiplier += 0.15
     elif level_difference >= 2:
-        multiplier += 0.6
+        multiplier += 0.4
     elif level_difference == -1:
-        multiplier -= 0.3
+        multiplier -= 0.15
     elif level_difference <= -2:
-        multiplier -= 0.6
+        multiplier -= 0.4
     
     # Age
     # -For very young and old shorter Exercise
@@ -178,9 +178,10 @@ def calculate_weight(exercise_experience_level,age,bmi,user_experience_level):
     if(multiplier > 2):
         multiplier = 2
 
-    return multiplier
+    # I round the multiplier to 2 decimals
+    return round(multiplier, 2)
 
-# Math functions
+# Math functions ----
 
 # Age
 x_points_age = np.array([12, 20, 120])

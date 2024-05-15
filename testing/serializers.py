@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 import re
 
-from .models import UserProfile,Workout
+from .models import UserProfile,Workout,Exercise,UserWorkout
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -62,6 +62,27 @@ class UserSerializer(serializers.ModelSerializer):
         return value
     
 class WorkoutSerializer(serializers.ModelSerializer):
+    exercises = serializers.SerializerMethodField()
+
     class Meta:
         model = Workout
         fields = '__all__'
+
+    def get_exercises(self, obj):
+        # Az exercise_order mező alapján iterálunk
+        exercise_ids = obj.exercise_order
+        exercises = [Exercise.objects.get(pk=exercise_id) for exercise_id in exercise_ids]
+        return ExerciseSerializer(exercises, many=True).data
+
+class ExerciseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Exercise
+        fields = '__all__'
+        
+class UserWorkoutSerializer(serializers.ModelSerializer):
+    workout = WorkoutSerializer()
+    workout_id = serializers.CharField(source='workout.workoutid')
+
+    class Meta:
+        model = UserWorkout
+        fields = ['workout_id','workout', 'weights', 'do_weekly']

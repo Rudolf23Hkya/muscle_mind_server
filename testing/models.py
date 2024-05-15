@@ -157,7 +157,7 @@ class Workout(models.Model):
 
 class UserDailyPerformance(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(User, models.DO_NOTHING)
+    user = models.ForeignKey(UserProfile, models.DO_NOTHING)
     date = models.DateField()
     calorie_intake = models.IntegerField()
     time_working_out_minutes = models.IntegerField()
@@ -173,13 +173,13 @@ class UserDailyPerformance(models.Model):
 
 class UserWorkout(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE,db_column='user_id')
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE,db_column='user_id')
     workout = models.ForeignKey(Workout, on_delete=models.CASCADE,db_column='workout_id')
     weights = ArrayField(models.FloatField(), default=list)
     do_weekly = models.IntegerField()
     
     def __str__(self):
-        return self.user.username + " - " + self.workout.name
+        return self.user.user.username + " - " + self.workout.name
 
     class Meta:
         managed = False
