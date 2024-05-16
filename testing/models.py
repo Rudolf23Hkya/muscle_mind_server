@@ -160,7 +160,7 @@ class UserDailyPerformance(models.Model):
     user = models.ForeignKey(UserProfile, models.DO_NOTHING)
     date = models.DateField()
     calorie_intake = models.IntegerField()
-    time_working_out_minutes = models.IntegerField()
+    time_working_out_sec = models.IntegerField()
     calories_burnt = models.IntegerField()
     
     def __str__(self):

@@ -1,7 +1,6 @@
 from django.db.models import F
 from datetime import date
 from django.db.models import QuerySet
-from django.contrib.auth.models import User
 from django.db.models.functions import Cast
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -26,12 +25,12 @@ def get_or_create_user_daily_performance(id):
         date=date.today(),
         defaults={
             'calorie_intake': 0,
-            'time_working_out_minutes': 0,
+            'time_working_out_sec': 0,
             'calories_burnt': 0
         }
     )
 # user_daily_performance updaters
-def add_user_d_cal_eaten(user_id, cal=0):
+def add_cal_eaten(user_id, cal=0):
     obj, created = get_or_create_user_daily_performance(user_id)
     if created:
         obj.calorie_intake = cal
@@ -39,7 +38,7 @@ def add_user_d_cal_eaten(user_id, cal=0):
         obj.calorie_intake = F('calorie_intake') + cal
     obj.save()
 
-def add_user_d_cal_burnt(user_id, cal=0):
+def add_cal_burnt(user_id, cal=0):
     obj, created = get_or_create_user_daily_performance(user_id)
     if created:
         obj.calories_burnt = cal
@@ -47,21 +46,28 @@ def add_user_d_cal_burnt(user_id, cal=0):
         obj.calories_burnt = F('calories_burnt') + cal
     obj.save()
 
-def add_user_w_time(user_id, min=0):
+def add_workout_time(user_id, min=0):
     obj, created = get_or_create_user_daily_performance(user_id)
     if created:
-        obj.time_working_out_minutes = min
+        obj.time_working_out_sec = min
     else:
-        obj.time_working_out_minutes = F('time_working_out_minutes') + min
+        obj.time_working_out_sec = F('time_working_out_sec') + min
     obj.save()
-
-def add_eaten_calorie_data(request):
-    calorie_data = request.data.get('calorie_data', {})
-    if not calorie_data.get('calories'):
-        raise ValueError('Calories count is required')
     
-    cal = calorie_data.get('calories')
-    add_user_d_cal_eaten(request.user.id,cal)
+def handle_workout_done(user_id,user_workout_id):
+    
+    
+    cal_burnt = 0
+    sec_workint_out = 0
+    
+    
+    # Adding the time spent / calories burnt to the daily performance
+    add_cal_burnt(cal_burnt)
+    add_workout_time(min)
+    
+#TODO
+def update_weights_aft_workout():
+    hello = 0
 
 # Returns the 3 most suitable workouts for the user
 def get_best_3_workout(user_id, weightlifting, trx):
@@ -124,6 +130,7 @@ def get_best_3_workout(user_id, weightlifting, trx):
     if isinstance(workouts, QuerySet):
         workouts = list(workouts)    
     return workouts
+    
 
 # Calculating the weights for each exercise, to make more personal for the users
 def calculate_weights(workout_id,user_id):

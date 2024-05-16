@@ -3,9 +3,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import AccessToken
-from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 
@@ -50,14 +48,18 @@ def get_calories(request):
     ser = UserSerializer(user,many=True)
     return JsonResponse({"users":ser.data})
     
-    #If the data is valid saves it to the db and responds with OK
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_calories(request):
     try:
-        result = add_eaten_calorie_data(request)
-        return Response({'message': 'Success', 'data': result}, status=status.HTTP_201_CREATED)
+        cal = request.data.get('calorie_data').get('calories')
+        
+        if cal:
+            add_cal_eaten(request.user.id,cal)
+            return Response({'message': 'Success', 'Cal': cal}, status=status.HTTP_201_CREATED)
+        else:
+            raise ValueError('Calories count is required')
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -67,9 +69,10 @@ def add_calories(request):
 def workout_done(request):
     try:
         user_id = request.user.id
-        data = request.data
-        # Az adatok logikai feldolgozása itt történne
-        print(data)  # Csak a bemenet ellenőrzésére
+        user_workout_id = request.data.get("user_workout_id")
+        
+        handle_workout_done(user_id,user_workout_id)
+        
         return Response({'message': 'Success'}, status=status.HTTP_201_CREATED)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
