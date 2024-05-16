@@ -21,20 +21,21 @@ from testing import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    #authentication
+    # authentication
     path('regUser/', views_auth.register_new_user),
     path('loginUser/', views_auth.login_user),
     path('loginUser_google/', views_auth.login_with_google),
     path('get_new_access_token/', views_auth.get_new_access_token),
-    #data layer
+    # data layer
     path('get_user_data/', views.get_user_data),
     path('get_calories/', views.get_calories),
     path('add_calories/', views.add_calories),
     
-    path('get_stats/', views.get_stats),
-    
     path('get_recom_workouts/', views.get_recom_workouts),
     path('post_user_workout/', views.post_user_workout),
     path('get_user_workout/', views.get_user_workout),
-    path('workout_done/', views.workout_done)
+    path('workout_done/', views.workout_done),
+    
+    # stats
+    path('get_stats/', views.get_stats),
 ]

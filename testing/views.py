@@ -12,9 +12,6 @@ from .serializers import UserSerializer,WorkoutSerializer,UserWorkoutSerializer
 from .data_processors import *
 from.api_response_generators import *
 
-import datetime
-from datetime import timedelta
-
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -40,15 +37,20 @@ def get_user_data(request):
     # If the token is invalid or expired, or the user does not exist
         return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
-
+# With this view we can see how much calory was consumed today by the user
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_calories(request):
-    #Handlest a reg. request
-    user = User.objects.all()
-    ser = UserSerializer(user,many=True)
-    return JsonResponse({"users":ser.data})
+    try:
+        user_id = request.user.id
+        obj, _ = get_or_create_user_daily_performance(user_id)
+        cal = obj.calorie_intake
+        
+        return Response({'message': 'Success', 'Cal': cal}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
-    
+# With this view calories can be added to the daily stat
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_calories(request):
@@ -63,7 +65,8 @@ def add_calories(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
- 
+
+# This view saves workout statistics and modify weights based on rating
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def workout_done(request):
@@ -78,7 +81,7 @@ def workout_done(request):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-
+# This view reccomends 3 workouts for the user based on user data
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_recom_workouts(request):
@@ -92,6 +95,8 @@ def get_recom_workouts(request):
     # Serializeing the data and respond
     serializer = WorkoutSerializer(workouts, many=True)
     return JsonResponse(serializer.data, safe=False)
+
+# This view saves a workout which was selected by the user for customization
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def post_user_workout(request):
@@ -118,6 +123,7 @@ def post_user_workout(request):
     except (ValueError, AttributeError, Workout.DoesNotExist) as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+# This view returns the user s saved customized workouts
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_workout(request):
@@ -128,64 +134,26 @@ def get_user_workout(request):
     return Response(serializer.data)
 
 #This view returns this week s workout data for the user starting with monday
-@api_view(['POST'])
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_stats(request):
-    token_data = request.data.get('tokens', {})
-    access_token = token_data.get('access')
-    
-    if not access_token:
-        return Response({'error': 'Access token is required'}, status=status.HTTP_400_BAD_REQUEST)
-    
+    user_id = request.user.id
     try:
-        token = AccessToken(access_token)  
-        user_id = token['user_id'] 
-        User = get_user_model()
-        user = User.objects.get(pk=user_id)
+        year = int(request.query_params.get('year'))
+        month = int(request.query_params.get('month'))
+        day = int(request.query_params.get('day'))
         
-        # Parsing date
-        year = int(request.data.get('year'))
-        month = int(request.data.get('month'))
-        day = int(request.data.get('day'))
-
-        # Create the date object
+        # Create a date object
         date_obj = datetime.date(year, month, day)
-        prev_monday = find_previous_monday(date_obj)
         
-        # Collect data from Monday to Sunday
-        week_data = []
-        for i in range(7):
-            current_date = prev_monday + timedelta(days=i)
-            performances = UserDailyPerformance.objects.filter(user=user, date=current_date)
-            
-            # Format the result for each day
-            if performances.exists():
-                day_data = list(performances.values())
-            else:
-                day_data = [{}]  # Empty dictionary for days with no data
-            
-            week_data.append({
-                'date': current_date.isoformat(),
-                'data': day_data
-            })
+        # Collect the workout data from this week
+        stats = get_stats_of_the_week(user_id,date_obj)
 
+        # Date as key, stat as value
+        date_str = date_obj.strftime('%Y-%m-%d')
         return Response({
-            'week_data': week_data
+            date_str: stats
         }, status=status.HTTP_200_OK)
     
     except Exception as e:
-        # If the token is invalid or expired, or the user does not exist
         return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
-
-def find_previous_monday(date_obj):
-    # Get the weekday number for the date object (0 = Monday, ..., 6 = Sunday)
-    day_of_week = date_obj.weekday()
-    
-    # Calculate the difference to the previous Monday
-    if day_of_week == 0:
-        # If it's already Monday, return the same date
-        previous_monday = date_obj
-    else:
-        # Calculate the number of days to subtract to get back to the previous Monday
-        previous_monday = date_obj - datetime.timedelta(days=day_of_week)
-
-    return previous_monday

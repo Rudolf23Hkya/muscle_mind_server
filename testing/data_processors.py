@@ -15,6 +15,10 @@ from .models import ExperienceLevel,Category,MuscleGroup
 from scipy.interpolate import interp1d
 import numpy as np
 
+# date 
+import datetime
+from datetime import timedelta
+
 def get_or_create_user_daily_performance(id):
     """
     A function that checks if there is already a record for the given user today, 
@@ -272,3 +276,38 @@ def interpolate_bmi(x):
     y_value = interpolation_function_bmi(x)
 
     return y_value
+
+# stats
+
+def find_previous_monday(date_obj):
+    # Get the weekday number for the date object (0 = Monday, ..., 6 = Sunday)
+    day_of_week = date_obj.weekday()
+    
+    # Calculate the difference to the previous Monday
+    if day_of_week == 0:
+        # If it's already Monday, return the same date
+        previous_monday = date_obj
+    else:
+        # Calculate the number of days to subtract to get back to the previous Monday
+        previous_monday = date_obj - datetime.timedelta(days=day_of_week)
+
+    return previous_monday
+
+def get_stats_of_the_week(user_id,date):
+    week_data = []
+    monday_date = find_previous_monday(date)
+    
+    for i in range(7):
+        current_date = monday_date + timedelta(days=i)
+        performances = UserDailyPerformance.objects.filter(user=user_id, date=current_date)
+            
+        # Format the result for each day
+        if performances.exists():
+            day_data = list(performances.values())
+        else:
+            day_data = [{}]  # Empty dictionary for days with no data
+            
+        week_data.append({
+            'date': current_date.isoformat(),
+            'data': day_data
+        })
