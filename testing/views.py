@@ -5,36 +5,27 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 
 from .models import UserDailyPerformance,UserWorkout
-from .serializers import UserSerializer,WorkoutSerializer,UserWorkoutSerializer
+from .serializers import WorkoutSerializer,UserWorkoutSerializer
 from .data_processors import *
 from.api_response_generators import *
 
 from rest_framework.permissions import IsAuthenticated
 
-
-@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_user_data(request):
-    token_data = request.data.get('tokens', {})
-    access_token = token_data.get('access')
-    
-    if not access_token:
-        return Response({'error': 'Access token is required'}, status=status.HTTP_400_BAD_REQUEST)
-    
     try:
     # Decode the access token
-        token = AccessToken(access_token)
-        user_id = token['user_id']  # Extract user ID from token payload
+        user_id = request.user.id
         User = get_user_model()
-        user = User.objects.get(pk=user_id)  # Retrieve the user based on the token user_id
-        # Generate the response (no Refrsh Token)
-        response = generate_full_auth_data(user, user.profile, "", access_token)
+        user = User.objects.get(pk=user_id)
+        # Generate the response (Tokens)
+        response = generate_only_user_data(user, user.profile)
         return Response(response, status=status.HTTP_200_OK)
     
     except Exception as e:
-    # If the token is invalid or expired, or the user does not exist
         return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
 # With this view we can see how much calory was consumed today by the user
