@@ -78,8 +78,9 @@ def login_with_google(request):
     ser = UserSerializer(user,many=True)
     return JsonResponse({"users":ser.data})
 
-@api_view(['GET'])
-def get_refresh_token(request):
+# This function is POST not GET for security reasons
+@api_view(['POST'])
+def get_new_access_token(request):
     token_data = request.data.get('tokens', {})
     refresh_token_str = token_data.get('refresh')
 
@@ -89,7 +90,7 @@ def get_refresh_token(request):
     try:
         refresh_token = RefreshToken(refresh_token_str)
 
-        # From the refresh token generateing a new access token
+        # From the refresh token generating a new access token
         new_access_token = refresh_token.access_token
 
         response = generate_auth_data(refresh_token_str, str(new_access_token))
