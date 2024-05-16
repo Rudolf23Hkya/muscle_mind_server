@@ -61,12 +61,19 @@ def add_calories(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-'''  
+ 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def workout_done(request):
-    return generic_api_handler(request, "")
-'''  
+    try:
+        user_id = request.user.id
+        data = request.data
+        # Az adatok logikai feldolgozása itt történne
+        print(data)  # Csak a bemenet ellenőrzésére
+        return Response({'message': 'Success'}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -102,7 +109,6 @@ def post_user_workout(request):
                 do_weekly=do_weekly
             )
         
-        # Válasz vissza a létrehozott bejegyzés adataival
         return Response({'workoutid': workout_id, 'do_weekly': do_weekly}, status=status.HTTP_201_CREATED)
     
     except (ValueError, AttributeError, Workout.DoesNotExist) as e:

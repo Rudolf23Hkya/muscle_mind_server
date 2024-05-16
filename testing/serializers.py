@@ -81,8 +81,8 @@ class ExerciseSerializer(serializers.ModelSerializer):
         
 class UserWorkoutSerializer(serializers.ModelSerializer):
     workout = WorkoutSerializer()
-    workout_id = serializers.CharField(source='workout.workoutid')
+    #workout_id = serializers.CharField(source='workout.workoutid')
 
     class Meta:
         model = UserWorkout
-        fields = ['workout_id','workout', 'weights', 'do_weekly']
+        fields = ['id','workout', 'weights', 'do_weekly']

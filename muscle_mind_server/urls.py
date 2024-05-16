@@ -36,5 +36,5 @@ urlpatterns = [
     path('get_recom_workouts/', views.get_recom_workouts),
     path('post_user_workout/', views.post_user_workout),
     path('get_user_workout/', views.get_user_workout),
-    #path('workout_done/', views.workout_done)
+    path('workout_done/', views.workout_done)
 ]
