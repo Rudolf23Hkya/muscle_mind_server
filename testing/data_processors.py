@@ -136,7 +136,12 @@ def calculate_weights(workout_id,user_id):
     weights = []
     # User data for the calculation
     age = user_profile.age
-    bmi = user_profile.weight / (user_profile.height ** 2)
+    # Convert height from centimeters to meters
+    height_in_meters = user_profile.height / 100
+
+    # Calculate BMI
+    bmi = float(user_profile.weight  / (height_in_meters ** 2))
+    
     user_experience_level = user_profile.experiencelevel
     
     for exercise_id in workout.exercise_order:
@@ -162,8 +167,8 @@ def calculate_weight(exercise_experience_level,age,bmi,user_experience_level):
     
     # If the value is > 1 the exercise is easy for the user and needs boosting
     # If the value is < 1 the exercise is hard for the user and needs nerfing
-    multiplier = 1
-    
+    multiplier = 0.5
+
     # Experience
     level_difference = user_level - exercise_level
     
@@ -175,10 +180,12 @@ def calculate_weight(exercise_experience_level,age,bmi,user_experience_level):
         multiplier -= 0.15
     elif level_difference <= -2:
         multiplier -= 0.4
-    
+
     # Age
     # -For very young and old shorter Exercise
     multiplier += interpolate_age(age)
+    #print(age)
+    #print(interpolate_age(age))
     # Bmi
     # -For larger bmi shorter Exercise
     multiplier += interpolate_bmi(bmi)
