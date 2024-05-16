@@ -55,6 +55,12 @@ cover/
 *.mo
 *.pot
 
+# Ignoring the OAuth client secret JSON file
+client_secret_*.json
+
+# Ignoring the OAuth token file
+token.json
+
 # Django stuff:
 *.log
 local_settings.py
