@@ -293,9 +293,8 @@ def find_previous_monday(date_obj):
 
     return previous_monday
 
-def get_stats_of_the_week(user_id,date):
+def get_stats_of_the_week(user_id,monday_date):
     week_data = []
-    monday_date = find_previous_monday(date)
     
     for i in range(7):
         current_date = monday_date + timedelta(days=i)
@@ -311,3 +310,5 @@ def get_stats_of_the_week(user_id,date):
             'date': current_date.isoformat(),
             'data': day_data
         })
+        
+    return week_data

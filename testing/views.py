@@ -137,9 +137,11 @@ def get_stats(request):
         # Create a date object
         date_obj = datetime.date(year, month, day)
         
+        # Find the nearest prev monday
+        mon_date = find_previous_monday(date_obj)
+        
         # Collect the workout data from this week
-        stats = get_stats_of_the_week(user_id,date_obj)
-
+        stats = get_stats_of_the_week(user_id,mon_date)
         # Date as key, stat as value
         date_str = date_obj.strftime('%Y-%m-%d')
         return Response({
