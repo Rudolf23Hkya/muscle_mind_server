@@ -38,4 +38,5 @@ urlpatterns = [
     
     # stats
     path('get_stats/', views.get_stats),
+    path('get_stats_via_email/', views.get_stats_via_email),
 ]

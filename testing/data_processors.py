@@ -19,6 +19,13 @@ import numpy as np
 import datetime
 from datetime import timedelta
 
+# export data
+import csv
+import io
+# pdf
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
 def get_or_create_user_daily_performance(id):
     """
     A function that checks if there is already a record for the given user today, 
@@ -312,3 +319,70 @@ def get_stats_of_the_week(user_id,monday_date):
         })
         
     return week_data
+
+def get_all_daily_stats_query(user_id):
+    # One specific query for performance
+    performances = UserDailyPerformance.objects.filter(user=user_id).values(
+        'date', 'calorie_intake', 'time_working_out_sec', 'calories_burnt'
+    ).order_by('date')
+    
+    return performances
+
+def get_all_daily_stats_csv(user_id):
+    performances = get_all_daily_stats_query(user_id)
+    # Create a buffer to hold the CSV data
+    buffer = io.StringIO()
+    
+    # Create a CSV writer
+    writer = csv.writer(buffer)
+    
+    # Write the header
+    writer.writerow(['date', 'calorie_intake', 'time_working_out_sec', 'calories_burnt'])
+    
+    # Write the data rows
+    for performance in performances:
+        writer.writerow([
+            performance['date'].isoformat(),
+            performance['calorie_intake'],
+            performance['time_working_out_sec'],
+            performance['calories_burnt']
+        ])
+    
+    # Return the buffer's content as a string
+    return buffer.getvalue()
+
+def get_all_daily_stats_pdf(user_id):
+    performances = get_all_daily_stats_query(user_id)
+    
+    # Create a buffer to hold the PDF data
+    buffer = io.BytesIO()
+    
+    # Create a canvas
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    # Set the title and headers
+    c.drawString(100, height - 40, "Daily Stats Report")
+    c.drawString(100, height - 60, "Date")
+    c.drawString(200, height - 60, "Calorie Intake")
+    c.drawString(300, height - 60, "Time Working Out (sec)")
+    c.drawString(450, height - 60, "Calories Burnt")
+    
+    # Write the data rows
+    y = height - 80
+    for performance in performances:
+        c.drawString(100, y, performance['date'].isoformat())
+        c.drawString(200, y, str(performance['calorie_intake']))
+        c.drawString(300, y, str(performance['time_working_out_sec']))
+        c.drawString(450, y, str(performance['calories_burnt']))
+        y -= 20
+    
+    # Save the PDF
+    c.showPage()
+    c.save()
+    
+    # Move the buffer position to the beginning
+    buffer.seek(0)
+    
+    # Return the buffer's content as a byte string
+    return buffer.getvalue()

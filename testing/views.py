@@ -3,7 +3,6 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth import get_user_model
 
 from .models import UserDailyPerformance,UserWorkout
@@ -12,6 +11,10 @@ from .data_processors import *
 from.api_response_generators import *
 
 from rest_framework.permissions import IsAuthenticated
+
+from decouple import config
+from django.http import HttpResponse
+from django.core.mail import EmailMessage
 
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
@@ -150,3 +153,48 @@ def get_stats(request):
     
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_stats_via_email(request):
+    user_id = request.user.id
+    
+    try:
+        user_profile = UserProfile.objects.get(user=user_id)
+        user_email = user_profile.user.email
+        
+        if not user_email.endswith('@gmail.com'):
+            return Response({'error': 'Email domain not allowed. Only Gmail is accepted.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        csv_selected = request.GET.get('csv')
+        pdf_selected = request.GET.get('pdf')
+        
+        if csv_selected:
+            attachment_data = get_all_daily_stats_csv(user_id)
+            attachment_filename = 'daily_stats.csv'
+            attachment_mimetype = 'text/csv'
+        elif pdf_selected:
+            attachment_data = get_all_daily_stats_pdf(user_id)
+            attachment_filename = 'daily_stats.pdf'
+            attachment_mimetype = 'application/pdf'
+        else:
+            return Response({'error': "No selected pdf or csv option!"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        body_text = 'Dear ' + user_profile.user.username + ', Your workout stats by day is attached to this e-mail.'
+        # Create email
+        email = EmailMessage(
+            subject='Muscle Mind stats - ' + user_profile.user.username,
+            body=body_text,
+            from_email=config('EMAIL_HOST_USER'),
+            to=[user_email],
+        )
+        # Attach file
+        email.attach(attachment_filename, attachment_data, attachment_mimetype)
+        
+        # Send email
+        email.send()
+        
+        return Response({'success': 'Email sent successfully!'}, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
