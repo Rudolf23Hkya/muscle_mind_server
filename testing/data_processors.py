@@ -6,7 +6,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
 # Models
-from .models import UserDailyPerformance,UserProfile,Disease,Workout,Exercise
+from .models import UserDailyPerformance,UserProfile,Disease,Workout,Exercise,UserWorkout
 
 # Enums
 from .models import ExperienceLevel,Category,MuscleGroup
@@ -54,20 +54,53 @@ def add_workout_time(user_id, min=0):
         obj.time_working_out_sec = F('time_working_out_sec') + min
     obj.save()
     
-def handle_workout_done(user_id,user_workout_id):
-    
+def handle_workout_done(user_id,user_workout_id,done_exercises):
+    user_workout = UserWorkout.objects.get(id=user_workout_id)
     
     cal_burnt = 0
     sec_workint_out = 0
+    weights = user_workout.weights
     
+    if(len(done_exercises) != len(weights)):
+        raise ValueError("Invalid Exercise count. Data was damaged!")
+    
+    # Evaluating data from the exercises
+    e_cntr = 0
+    for _, details in done_exercises.items():
+        rating = int(details["rating"])
+        
+        if rating == 1:
+            weights[e_cntr] -= 0.1
+        elif rating == 2:
+            weights[e_cntr] -= 0.05
+        elif rating == 3:
+            pass
+        elif rating == 4:
+            weights[e_cntr] += 0.1
+        elif rating == 5:
+            weights[e_cntr] += 0.05  
+        
+        # Normalization
+        if weights[e_cntr] > 2:
+            weights[e_cntr] = 2
+            
+        if weights[e_cntr] < 0:
+            weights[e_cntr] = 0
+        
+        cal = int(details["cal"])
+        cal_burnt += cal
+        
+        duration = int(details["duration"])
+        sec_workint_out += duration
+        
+        e_cntr += 1
+    
+    # Updating weigths
+    user_workout.weights = weights
     
     # Adding the time spent / calories burnt to the daily performance
-    add_cal_burnt(cal_burnt)
-    add_workout_time(min)
-    
-#TODO
-def update_weights_aft_workout():
-    hello = 0
+    add_cal_burnt(user_id,cal_burnt)
+    add_workout_time(user_id,sec_workint_out)
 
 # Returns the 3 most suitable workouts for the user
 def get_best_3_workout(user_id, weightlifting, trx):

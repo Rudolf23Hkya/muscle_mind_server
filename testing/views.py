@@ -55,11 +55,11 @@ def add_calories(request):
     try:
         cal = request.data.get('calorie_data').get('calories')
         
-        if cal:
+        if cal and cal > 0:
             add_cal_eaten(request.user.id,cal)
             return Response({'message': 'Success', 'Cal': cal}, status=status.HTTP_201_CREATED)
         else:
-            raise ValueError('Calories count is required')
+            raise ValueError('Invalid calorie count!')
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -70,10 +70,11 @@ def workout_done(request):
     try:
         user_id = request.user.id
         user_workout_id = request.data.get("user_workout_id")
+        done_exercises = request.data.get("exercises")
         
-        handle_workout_done(user_id,user_workout_id)
+        handle_workout_done(user_id,user_workout_id,done_exercises)
         
-        return Response({'message': 'Success'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Workout posted!'}, status=status.HTTP_201_CREATED)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
