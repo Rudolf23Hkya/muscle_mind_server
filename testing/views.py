@@ -20,29 +20,6 @@ from datetime import timedelta
 from rest_framework.permissions import IsAuthenticated
 
 
-def generic_api_handler(request, data_processor):
-    """
-    General function for handling API calls, including authentication,
-    data processing, and basic error handling.
-
-    Args:
-        request: The HTTP request object.
-        data_processor: A function responsible for processing the request data,
-                        and raising an exception if an error occurs.
-
-    Returns:
-        Response: The REST response, which may contain success or error information.
-    """
-
-    # Calling the data processing function
-    try:
-        result = data_processor(request)
-        return Response({'message': 'Success', 'data': result}, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 @api_view(['POST'])
 def get_user_data(request):
     token_data = request.data.get('tokens', {})
@@ -78,12 +55,18 @@ def get_calories(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_calories(request):
-    return generic_api_handler(request, add_eaten_calorie_data)
-    
+    try:
+        result = add_eaten_calorie_data(request)
+        return Response({'message': 'Success', 'data': result}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+'''  
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def add_workout_data(request):
-    return generic_api_handler(request, process_wourout_done)
+def workout_done(request):
+    return generic_api_handler(request, "")
+'''  
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

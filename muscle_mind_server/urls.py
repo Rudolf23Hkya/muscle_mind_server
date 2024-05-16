@@ -28,12 +28,13 @@ urlpatterns = [
     path('get_refresh_token/', views_auth.get_refresh_token),
     #data layer
     path('get_user_data/', views.get_user_data),
-    path('add_workout_data/', views.add_workout_data),
     path('get_calories/', views.get_calories),
     path('add_calories/', views.add_calories),
+    
     path('get_stats/', views.get_stats),
     
     path('get_recom_workouts/', views.get_recom_workouts),
     path('post_user_workout/', views.post_user_workout),
-    path('get_user_workout/', views.get_user_workout)
+    path('get_user_workout/', views.get_user_workout),
+    #path('workout_done/', views.workout_done)
 ]

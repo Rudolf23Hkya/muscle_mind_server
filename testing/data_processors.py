@@ -2,6 +2,10 @@ from django.db.models import F
 from datetime import date
 from django.db.models import QuerySet
 from django.contrib.auth.models import User
+from django.db.models.functions import Cast
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.db.models import Q
 # Models
 from .models import UserDailyPerformance,UserProfile,Disease,Workout,Exercise
 
@@ -72,26 +76,34 @@ def get_best_3_workout(user_id, weightlifting, trx):
         workouts = workouts.exclude(category__contains=[Category.WEIGHTLIFTING.value])
     if not trx:
         workouts = workouts.exclude(category__contains=[Category.TRX.value])
-    
+
     # Step 3: Exclude workouts based on Diseases
     user_diseases = Disease.objects.get(user=user_profile)
+    
     # Exclude workouts that target the lower body if the user has a bad knee
     if user_diseases.bad_knee:
-        workouts = workouts.exclude(musclegroup__contains=[MuscleGroup.LOWER_BODY.value])
+        lower_body_value = MuscleGroup.LOWER_BODY.value
+        workouts = workouts.exclude(Q(musclegroup__icontains=lower_body_value))
 
     # Exclude high intensity workouts if the user has cardiovascular disease
     if user_diseases.cardiovascular_d:
-        workouts = workouts.exclude(category__contains=[ExperienceLevel.PROFESSIONAL.value])
+        professional_value = ExperienceLevel.PROFESSIONAL.value
+        workouts = workouts.exclude(Q(category__icontains=professional_value))
 
     # Exclude long high intensity workouts if the user has asthma
     if user_diseases.asthma:
-        workouts = workouts.exclude(category__contains=[ExperienceLevel.PROFESSIONAL.value])
-        # exercise_order lenght is greater than 5
-        workouts = workouts.exclude(exercise_order__length__gt=5)
+        professional_value = ExperienceLevel.PROFESSIONAL.value
+        workouts = workouts.exclude(Q(category__icontains=professional_value))
+
+        # Exclude workouts where exercise_order length is greater than 5
+        workouts = workouts.annotate(
+            exercise_order_len=Cast(F('exercise_order'), ArrayField(models.IntegerField()))
+        ).exclude(exercise_order_len__len__gt=5)
 
     # Exclude weightlifting workouts if the user has osteoporosis
     if user_diseases.osteoporosis:
-        workouts = workouts.exclude(category__contains=[Category.WEIGHTLIFTING.value])
+        weightlifting_value = Category.WEIGHTLIFTING.value
+        workouts = workouts.exclude(Q(category__icontains=weightlifting_value))
     
     # Step 4: Exclude workouts based on Experience(+1 level max)
     user_experience_level = user_profile.experiencelevel
