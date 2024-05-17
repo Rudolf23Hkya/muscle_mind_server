@@ -166,8 +166,8 @@ def get_stats_via_email(request):
         if not user_email.endswith('@gmail.com'):
             return Response({'error': 'Email domain not allowed. Only Gmail is accepted.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        csv_selected = request.GET.get('csv')
-        pdf_selected = request.GET.get('pdf')
+        csv_selected = request.GET.get('csv', 'false').lower() == 'true'
+        pdf_selected = request.GET.get('pdf', 'false').lower() == 'true'
         
         if csv_selected:
             attachment_data = get_all_daily_stats_csv(user_id)
