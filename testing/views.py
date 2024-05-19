@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 
-from .models import UserDailyPerformance,UserWorkout
+from .models import UserWorkout
 from .serializers import WorkoutSerializer,UserWorkoutSerializer
 from .data_processors import *
 from.api_response_generators import *
@@ -13,7 +13,6 @@ from.api_response_generators import *
 from rest_framework.permissions import IsAuthenticated
 
 from decouple import config
-from django.http import HttpResponse
 from django.core.mail import EmailMessage
 
 @permission_classes([IsAuthenticated])
@@ -40,7 +39,7 @@ def get_calories(request):
         obj, _ = get_or_create_user_daily_performance(user_id)
         cal = obj.calorie_intake
         
-        return Response({'message': 'Success', 'Cal': cal}, status=status.HTTP_200_OK)
+        return Response(request, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -49,11 +48,11 @@ def get_calories(request):
 @permission_classes([IsAuthenticated])
 def add_calories(request):
     try:
-        cal = request.data.get('calorie_data').get('calories')
+        cal = request.data.get('calories')
         
         if cal and cal > 0:
             add_cal_eaten(request.user.id,cal)
-            return Response({'message': 'Success', 'Cal': cal}, status=status.HTTP_201_CREATED)
+            return Response(request, status=status.HTTP_201_CREATED)
         else:
             raise ValueError('Invalid calorie count!')
 
@@ -71,7 +70,7 @@ def workout_done(request):
         
         handle_workout_done(user_id,user_workout_id,done_exercises)
         
-        return Response({'message': 'Workout posted!'}, status=status.HTTP_201_CREATED)
+        return Response(request, status=status.HTTP_201_CREATED)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -79,24 +78,26 @@ def workout_done(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_recom_workouts(request):
-    user_id = request.user.id
-    
-    weightlifting = request.GET.get('weightlifting')
-    trx = request.GET.get('trx')
-    
-    workouts = get_best_3_workout(user_id,weightlifting,trx)
+    try:
+        user_id = request.user.id
         
-    # Serializeing the data and respond
-    serializer = WorkoutSerializer(workouts, many=True)
-    return JsonResponse(serializer.data, safe=False)
+        weightlifting = request.GET.get('weightlifting')
+        trx = request.GET.get('trx')
+        
+        workouts = get_best_3_workout(user_id,weightlifting,trx)
+            
+        # Serializeing the data and respond
+        serializer = WorkoutSerializer(workouts, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # This view saves a workout which was selected by the user for customization
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def post_user_workout(request):
-    user_id = request.user.id
-    
+def post_user_workout(request): 
     try:
+        user_id = request.user.id
         workout_id = int(request.data.get('workout').get('workoutid'))
         do_weekly = int(request.data.get('do_weekly', 0))
 
@@ -111,28 +112,30 @@ def post_user_workout(request):
                 weights=weights,
                 do_weekly=do_weekly
             )
-        
         return Response({'workoutid': workout_id, 'do_weekly': do_weekly}, status=status.HTTP_201_CREATED)
     
-    except (ValueError, AttributeError, Workout.DoesNotExist) as e:
+    except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # This view returns the user s saved customized workouts
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_workout(request):
-    user_id = request.user.id
-    user_profile = UserProfile.objects.get(user=user_id)
-    user_workouts = UserWorkout.objects.filter(user=user_profile)
-    serializer = UserWorkoutSerializer(user_workouts, many=True)
-    return Response(serializer.data)
+    try:
+        user_id = request.user.id
+        user_profile = UserProfile.objects.get(user=user_id)
+        user_workouts = UserWorkout.objects.filter(user=user_profile)
+        serializer = UserWorkoutSerializer(user_workouts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 #This view returns this week s workout data for the user starting with monday
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_stats(request):
-    user_id = request.user.id
     try:
+        user_id = request.user.id
         year = int(request.query_params.get('year'))
         month = int(request.query_params.get('month'))
         day = int(request.query_params.get('day'))
@@ -156,10 +159,9 @@ def get_stats(request):
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def get_stats_via_email(request):
-    user_id = request.user.id
-    
+def get_stats_via_email(request): 
     try:
+        user_id = request.user.id
         user_profile = UserProfile.objects.get(user=user_id)
         user_email = user_profile.user.email
         

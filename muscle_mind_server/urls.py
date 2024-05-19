@@ -25,7 +25,7 @@ urlpatterns = [
     path('regUser/', views_auth.register_new_user),
     path('loginUser/', views_auth.login_user),
     path('loginUser_google/', views_auth.login_with_google),
-    path('get_new_access_token/', views_auth.get_new_access_token),
+    path('get_access_token/', views_auth.get_access_token),
     # data layer
     path('get_user_data/', views.get_user_data),
     path('get_calories/', views.get_calories),
@@ -38,5 +38,5 @@ urlpatterns = [
     
     # stats
     path('get_stats/', views.get_stats),
-    path('get_stats_via_email/', views.get_stats_via_email),
+    path('get_stats_via_email/', views.get_stats_via_email)
 ]

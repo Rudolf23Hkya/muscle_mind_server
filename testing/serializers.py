@@ -30,7 +30,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return value
 
     def validate_height(self, value):
-        if value < 0.0 or value > 251.0:
+        if value < 50.0 or value > 251.0:
             raise serializers.ValidationError("Invalid user height.")
         return value
 
