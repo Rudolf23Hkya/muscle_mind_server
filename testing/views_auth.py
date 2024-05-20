@@ -117,7 +117,7 @@ def get_access_token(request):
         new_access_token = refresh_token.access_token
 
         response = generate_auth_data(refresh_token_str, str(new_access_token))
-
+        
         return Response(response, status=status.HTTP_200_OK)
 
     except Exception as e:

@@ -39,7 +39,7 @@ def get_calories(request):
         obj, _ = get_or_create_user_daily_performance(user_id)
         cal = obj.calorie_intake
         
-        return Response(request, status=status.HTTP_200_OK)
+        return Response({"calories":cal}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -49,10 +49,9 @@ def get_calories(request):
 def add_calories(request):
     try:
         cal = request.data.get('calories')
-        
         if cal and cal > 0:
             add_cal_eaten(request.user.id,cal)
-            return Response(request, status=status.HTTP_201_CREATED)
+            return Response(f"{cal} calories added!", status=status.HTTP_201_CREATED)
         else:
             raise ValueError('Invalid calorie count!')
 

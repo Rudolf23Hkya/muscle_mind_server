@@ -19,10 +19,8 @@ def generate_full_auth_data(user, profile, refresh, access):
 
 def generate_auth_data(refresh, access):
     response_data = {
-        'tokens': {
             'refresh': str(refresh),
             'access': str(access)
-        }
     }
     return response_data
 def generate_only_user_data(user, profile):
