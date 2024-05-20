@@ -13,15 +13,18 @@ from .models import Disease
 from .serializers import UserSerializer,UserProfileSerializer
 from.api_response_generators import *
 
-def extract_error_messages(errors):
-    error_messages = []
+def get_error_message(errors):
+    """
+    Function to extract error messages from serializer errors.
+    """
+    messages = []
     for field, error_list in errors.items():
         for error in error_list:
-            if isinstance(error, dict) and 'string' in error:
-                error_messages.append(error['string'])
+            if isinstance(error, dict):
+                messages.append(error.get('string', 'Invalid data'))
             else:
-                error_messages.append(str(error))
-    return error_messages
+                messages.append(error)
+    return messages
 
 #Data validation done in the serializers
 @api_view(['POST'])
@@ -60,9 +63,15 @@ def register_new_user(request):
                 return Response(response, status=status.HTTP_201_CREATED)
             else:
                 user.delete()  # Cleanup if profile creation fails
-                return Response({'error': str(profile_serializer.errors)}, status=status.HTTP_400_BAD_REQUEST)
+                error_message = get_error_message(profile_serializer.errors)
+                print(error_message[0])
+                # Only 1 error should be handled at one time the client side
+                return Response({'error': error_message[0]}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': str(user_serializer.errors)}, status=status.HTTP_400_BAD_REQUEST)
+            error_message = get_error_message(user_serializer.errors)
+            print(error_message[0])
+            # Only 1 error should be handled at one time the client side
+            return Response({'error': error_message[0]}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         if(user_created):
             user.delete()  # Cleanup if profile creation fails
@@ -105,21 +114,21 @@ def login_with_google(request):
 # This function is POST not GET for security reasons
 @api_view(['POST'])
 def get_access_token(request):
-    refresh_token_str = request.data.get('refresh')
-
-    if not refresh_token_str:
-        return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
-
     try:
+        refresh_token_str = request.data.get('refresh')
+
+        if not refresh_token_str:
+            return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         refresh_token = RefreshToken(refresh_token_str)
 
         # From the refresh token generating a new access token
         new_access_token = refresh_token.access_token
 
         response = generate_auth_data(refresh_token_str, str(new_access_token))
-        
+            
         return Response(response, status=status.HTTP_200_OK)
 
     except Exception as e:
         # If the refresh token is invalid or expired
-        return Response({'error': str(extract_error_messages(e))}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
