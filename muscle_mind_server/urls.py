@@ -20,14 +20,15 @@ from testing import views_auth
 from testing import views
 
 urlpatterns = [
+    #NOT PART OF THE REST API
     path('admin/', admin.site.urls),
+    
     # authentication
     path('regUser/', views_auth.register_new_user),
     path('loginUser/', views_auth.login_user),
     path('loginUser_google/', views_auth.login_with_google),
-    path('get_access_token/', views_auth.get_access_token),
+    path('access_token/', views_auth.get_access_token),
     # data layer
-    path('get_user_data/', views.get_user_data),
     path('get_calories/', views.get_calories),
     path('add_calories/', views.add_calories),
     

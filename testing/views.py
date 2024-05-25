@@ -15,20 +15,6 @@ from rest_framework.permissions import IsAuthenticated
 from decouple import config
 from django.core.mail import EmailMessage
 
-@permission_classes([IsAuthenticated])
-@api_view(['GET'])
-def get_user_data(request):
-    try:
-    # Decode the access token
-        user_id = request.user.id
-        User = get_user_model()
-        user = User.objects.get(pk=user_id)
-        # Generate the response (Tokens)
-        response = generate_only_user_data(user, user.profile)
-        return Response(response, status=status.HTTP_200_OK)
-    
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
 # With this view we can see how much calory was consumed today by the user
 @api_view(['GET'])
@@ -63,6 +49,7 @@ def add_calories(request):
 @permission_classes([IsAuthenticated])
 def workout_done(request):
     try:
+        print(request.data)
         user_id = request.user.id
         user_workout_id = request.data.get("user_workout_id")
         done_exercises = request.data.get("exercises")
@@ -71,6 +58,7 @@ def workout_done(request):
         
         return Response(request, status=status.HTTP_201_CREATED)
     except Exception as e:
+        print(str(e))
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # This view reccomends 3 workouts for the user based on user data

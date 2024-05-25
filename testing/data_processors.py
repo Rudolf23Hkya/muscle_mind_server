@@ -66,6 +66,7 @@ def add_workout_time(user_id, min=0):
     obj.save()
     
 def handle_workout_done(user_id,user_workout_id,done_exercises):
+    print(user_workout_id)
     user_workout = UserWorkout.objects.get(id=user_workout_id)
     
     cal_burnt = 0
@@ -120,13 +121,12 @@ def get_best_3_workout(user_id, weightlifting, trx):
     
     # Step 1: Start with all workouts
     workouts = Workout.objects.all()
-
     # Step 2: Exclude workouts based on equipment availability
     if not weightlifting:
         workouts = workouts.exclude(category__contains=[Category.WEIGHTLIFTING.value])
     if not trx:
         workouts = workouts.exclude(category__contains=[Category.TRX.value])
-
+        
     # Step 3: Exclude workouts based on Diseases
     user_diseases = Disease.objects.get(user=user_profile)
     
@@ -163,14 +163,14 @@ def get_best_3_workout(user_id, weightlifting, trx):
     
     # Step 5: Adjust the number of workouts to be 3 always
     workout_count = workouts.count()
-    
+
     if workout_count > 3:
         workouts = workouts.order_by('?')[:3]  # Randomly select 3 workouts if more than 3
     elif workout_count < 3:
         remaining_count = 3 - workout_count
         additional_workouts = Workout.objects.exclude(id__in=workouts.values_list('id', flat=True)).order_by('?')[:remaining_count]
         workouts = list(workouts) + list(additional_workouts)
-    
+
     if isinstance(workouts, QuerySet):
         workouts = list(workouts)    
     return workouts

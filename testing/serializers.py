@@ -79,6 +79,15 @@ class ExerciseSerializer(serializers.ModelSerializer):
         model = Exercise
         fields = '__all__'
         
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Instead of null we return 0 for reps and duration
+        if representation['reps'] is None:
+            representation['reps'] = 0
+        if representation['duration'] is None:
+            representation['duration'] = 0
+        return representation
+        
 class UserWorkoutSerializer(serializers.ModelSerializer):
     workout = WorkoutSerializer()
     #workout_id = serializers.CharField(source='workout.workoutid')
