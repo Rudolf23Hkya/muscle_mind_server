@@ -65,20 +65,19 @@ def add_workout_time(user_id, min=0):
         obj.time_working_out_sec = F('time_working_out_sec') + min
     obj.save()
     
-def handle_workout_done(user_id,user_workout_id,done_exercises):
+def handle_workout_done(user_id, user_workout_id, done_exercises):
     print(user_workout_id)
     user_workout = UserWorkout.objects.get(id=user_workout_id)
     
     cal_burnt = 0
-    sec_workint_out = 0
+    sec_working_out = 0
     weights = user_workout.weights
     
-    if(len(done_exercises) != len(weights)):
+    if len(done_exercises) != len(weights):
         raise ValueError("Invalid Exercise count. Data was damaged!")
     
     # Evaluating data from the exercises
-    e_cntr = 0
-    for _, details in done_exercises.items():
+    for e_cntr, details in enumerate(done_exercises):
         rating = int(details["rating"])
         
         if rating == 1:
@@ -103,16 +102,15 @@ def handle_workout_done(user_id,user_workout_id,done_exercises):
         cal_burnt += cal
         
         duration = int(details["duration"])
-        sec_workint_out += duration
-        
-        e_cntr += 1
+        sec_working_out += duration
     
-    # Updating weigths
+    # Updating weights
     user_workout.weights = weights
+    user_workout.save()
     
     # Adding the time spent / calories burnt to the daily performance
-    add_cal_burnt(user_id,cal_burnt)
-    add_workout_time(user_id,sec_workint_out)
+    add_cal_burnt(user_id, cal_burnt)
+    add_workout_time(user_id, sec_working_out)
 
 # Returns the 3 most suitable workouts for the user
 def get_best_3_workout(user_id, weightlifting, trx):

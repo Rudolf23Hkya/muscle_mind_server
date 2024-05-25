@@ -49,16 +49,18 @@ def add_calories(request):
 @permission_classes([IsAuthenticated])
 def workout_done(request):
     try:
-        print(request.data)
         user_id = request.user.id
         user_workout_id = request.data.get("user_workout_id")
         done_exercises = request.data.get("exercises")
         
-        handle_workout_done(user_id,user_workout_id,done_exercises)
+        # Check if the done_exercises is a list
+        if not isinstance(done_exercises, list):
+            raise ValueError("Invalid data format for exercises. It should be a list.")
         
-        return Response(request, status=status.HTTP_201_CREATED)
+        handle_workout_done(user_id, user_workout_id, done_exercises)
+        
+        return Response(request.data, status=status.HTTP_201_CREATED)
     except Exception as e:
-        print(str(e))
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # This view reccomends 3 workouts for the user based on user data
