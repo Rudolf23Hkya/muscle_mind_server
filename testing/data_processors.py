@@ -313,7 +313,7 @@ def get_stats_of_the_week(user_id,monday_date):
             
         week_data.append({
             'date': current_date.isoformat(),
-            'data': day_data
+            'dailyReportData': day_data
         })
         
     return week_data

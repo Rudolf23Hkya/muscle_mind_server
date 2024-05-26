@@ -132,16 +132,19 @@ def get_stats(request):
         # Create a date object
         date_obj = datetime.date(year, month, day)
         
-        # Find the nearest prev monday
+        # Find the nearest previous Monday
         mon_date = find_previous_monday(date_obj)
         
         # Collect the workout data from this week
-        stats = get_stats_of_the_week(user_id,mon_date)
-        # Date as key, stat as value
-        date_str = date_obj.strftime('%Y-%m-%d')
-        return Response({
-            date_str: stats
-        }, status=status.HTTP_200_OK)
+        stats = get_stats_of_the_week(user_id, mon_date)
+        
+        # Format the response
+        response_data = {
+            "date": date_obj.isoformat(),
+            "days": stats
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
     
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
@@ -153,9 +156,6 @@ def get_stats_via_email(request):
         user_id = request.user.id
         user_profile = UserProfile.objects.get(user=user_id)
         user_email = user_profile.user.email
-        
-        if not user_email.endswith('@gmail.com'):
-            return Response({'error': 'Email domain not allowed. Only Gmail is accepted.'}, status=status.HTTP_400_BAD_REQUEST)
         
         csv_selected = request.GET.get('csv', 'false').lower() == 'true'
         pdf_selected = request.GET.get('pdf', 'false').lower() == 'true'

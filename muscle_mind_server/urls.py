@@ -26,7 +26,7 @@ urlpatterns = [
     # authentication
     path('regUser/', views_auth.register_new_user),
     path('loginUser/', views_auth.login_user),
-    path('loginUser_google/', views_auth.login_with_google),
+    path('handle_oAuth_google_token/', views_auth.handle_oAuth_google_token),
     path('access_token/', views_auth.get_access_token),
     # data layer
     path('get_calories/', views.get_calories),

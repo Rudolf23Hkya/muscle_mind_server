@@ -1,5 +1,3 @@
-from django.http import JsonResponse
-
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,6 +10,9 @@ from django.contrib.auth.models import User
 from .models import Disease
 from .serializers import UserSerializer,UserProfileSerializer
 from.api_response_generators import *
+
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 def get_error_message(errors):
     """
@@ -104,12 +105,40 @@ def login_user(request):
     else:
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(['POST'])       
-def login_with_google(request):
-    #Handlest a reg. request
-    user = User.objects.all()
-    ser = UserSerializer(user,many=True)
-    return JsonResponse({"users":ser.data})
+@api_view(['POST'])
+def handle_oAuth_google_token(request):
+    token = request.data
+    try:
+        # Specify the CLIENT_ID of the app that accesses the backend
+        id_info = id_token.verify_oauth2_token(token, google_requests.Request(),"1078166345846-pkuc1hn3m5tp4q2lsbh5a1able65q796.apps.googleusercontent.com")
+
+        # ID token is valid. Get the user's Google Account ID from the decoded token.
+        email = id_info['email']
+        name = "EMAIL_NOT_FOUND"
+        
+        print(email)
+        
+        response = {
+        'userData': {
+            'email': email,
+            'password': "",
+            'username': name,
+            'gender': "MALE",
+            'experiencelevel': "PROFESSIONAL",
+            'age': "23",
+            'weight': "72.00",
+            'height': "716.00",
+        },
+        'tokens': {
+            'refresh': "kakigndfj456466",
+            'access': "fdugiudfhn565648645as"
+        }
+    }
+        return Response(response, status=status.HTTP_200_OK)
+
+    except ValueError:
+        # Invalid token
+        return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
 # This function is POST not GET for security reasons
 @api_view(['POST'])
