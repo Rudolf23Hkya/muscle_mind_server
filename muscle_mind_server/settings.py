@@ -156,9 +156,9 @@ SIMPLE_JWT = {
 }
 
 AUTHENTICATION_BACKENDS = [
+    'testing.google_auth_backend.GoogleBackend',
     'testing.auth_backend.EmailOrUsernameModelBackend',
-    'django.contrib.auth.backends.ModelBackend',  # Optional, keep for fallback to default behavior
-    'allauth.account.auth_backends.AuthenticationBackend', #Google authentication
+    'django.contrib.auth.backends.ModelBackend'  # Optional, keep for fallback to default behavior
 ]
 
 LOGIN_REDIRECT_URL = '/'
