@@ -110,7 +110,8 @@ def handle_oAuth_google_token(request):
     token = request.data
     try:
         # Verifying the oAtuh token
-        id_info = id_token.verify_oauth2_token(token, google_requests.Request(),"1078166345846-pkuc1hn3m5tp4q2lsbh5a1able65q796.apps.googleusercontent.com")
+        clientId = "1078166345846-pkuc1hn3m5tp4q2lsbh5a1able65q796.apps.googleusercontent.com"
+        id_info = id_token.verify_oauth2_token(token, google_requests.Request(),clientId)
 
         # If oAtuh token is valid, getting the user's Google Account e-mail
         google_email = id_info.get('email')
@@ -120,7 +121,6 @@ def handle_oAuth_google_token(request):
         try:
             user = User.objects.get(email=google_email)
         except User.DoesNotExist:
-            print("USER DOes not exist")
         # If user does not exist the Registration process begins on the client
             response = {
                 'userData': {
@@ -139,7 +139,7 @@ def handle_oAuth_google_token(request):
                 }
             }
             return Response(response, status=status.HTTP_200_OK)
-
+        # Authenticate with the Google only authentication method
         user = authenticate(request, email=google_email)
         
         if user is not None and not user.is_superuser:
@@ -159,10 +159,10 @@ def handle_oAuth_google_token(request):
         elif user is not None:
             return Response({'error': 'Superuser have no access to the app!'}, status=status.HTTP_401_UNAUTHORIZED)
         else:
-            return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'Invalid Credentials!'}, status=status.HTTP_401_UNAUTHORIZED)
     except ValueError:
         # Invalid token
-        return Response({'error': 'Invalid oAuth token'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Invalid oAuth token!'}, status=status.HTTP_400_BAD_REQUEST)
 
 # This function is POST not GET for security reasons
 @api_view(['POST'])
