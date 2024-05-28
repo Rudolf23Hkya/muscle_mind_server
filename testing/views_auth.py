@@ -84,7 +84,7 @@ def login_user(request):
     password = request.data.get('password')
     
     if email is None or password is None:
-        return Response({'error': 'Please provide both email and password'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Please provide both email(or username) and password'}, status=status.HTTP_400_BAD_REQUEST)
     
     user = authenticate(username=email, password=password)
 
@@ -103,7 +103,7 @@ def login_user(request):
     elif user is not None:
         return Response({'error': 'Superuser have no access to the app!'}, status=status.HTTP_401_UNAUTHORIZED)
     else:
-        return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Invalid Credentials!'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
 def handle_oAuth_google_token(request):
@@ -121,7 +121,6 @@ def handle_oAuth_google_token(request):
         try:
             user = User.objects.get(email=google_email)
         except User.DoesNotExist:
-        # If user does not exist the Registration process begins on the client
             response = {
                 'userData': {
                 'email': google_email,
@@ -153,7 +152,6 @@ def handle_oAuth_google_token(request):
             
             response = generate_full_auth_data(user, user.profile, refresh, access)
             
-            print(str(response))
             return Response(response, status=status.HTTP_200_OK)
             
         elif user is not None:
