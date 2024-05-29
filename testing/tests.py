@@ -2,19 +2,10 @@ from django.test import TestCase
 
 import datetime
 from django.test import TestCase
-from django.urls import reverse
-from rest_framework.test import APIClient
-from rest_framework import status
 from unittest.mock import patch, MagicMock,Mock
-from django.contrib.auth.models import User
 from testing.models import *
 from testing.views import *
 from testing.data_processors import *
-'''
-Django's TestCase class provides an isolated test environment 
-where each test is run inside a transaction, and the database is rolled back at the end of each test. 
-This means that any data created during a test is not retained after the test completes.
-'''
 
 class FindPreviousMondayTest(TestCase):
 
